@@ -1,11 +1,12 @@
 "use client";
 
 
+import { loadStripe } from "@stripe/stripe-js";
 import { useAction } from "next-safe-action/hooks";
 import { useState } from "react";
 import { toast } from "sonner";
 
-import { createBooking } from "@/actions/create-booking";
+import { createBookingCheckoutSession } from "@/actions/create-booking-checkout-session";
 import { BookingSummary } from "@/components/booking-summary";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -17,21 +18,18 @@ import {
 } from "@/components/ui/sheet";
 import { Barbershop } from "@/generated/prisma/client";
 import { useGetDateAvailableTimeSlots } from "@/hooks/data/useGetDataAvailableTimeSlots";
-
 interface BookingSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   service: {
-    barbershop: Barbershop;
-    barbershopId: string;
     id: string;
     name: string;
+    barbershopId: string;
     priceInCents?: number | null;
     imageUrl?: string | null;
   };
   barbershop: Barbershop;
 }
-
 const today = new Date();
 today.setHours(0, 0, 0, 0);
 
@@ -52,10 +50,28 @@ export function BookingSheet({
   })
 
   const { execute: executeCreateBooking, isPending: isCreateBooking } = useAction(
-    createBooking,
+    createBookingCheckoutSession,
     {
-      onSuccess() {
-        toast.success("Agendamento confirmado com sucesso!");
+      async onSuccess(result) {
+        const checkoutSession = result.data;
+        if (!checkoutSession.url) {
+          return toast.error("Não foi possível iniciar o processo de pagamento. Tente novamente.");
+        }
+
+        if (!process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY) {
+          return toast.error("Chave de publicação do Stripe não está definida.");
+        }
+
+        const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
+        if (!stripe) {
+          return toast.error("Não foi possível iniciar o processo de agendamento. Tente novamente.");
+        }
+
+        await stripe.redirectToCheckout({
+          sessionId: checkoutSession.id,
+        });
+
+
         onOpenChange(false);
         setSelectedDate(undefined);
         setSelectedTime(undefined);

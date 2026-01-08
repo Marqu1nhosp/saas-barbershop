@@ -31,7 +31,7 @@ export const createBooking = protectedActionClient
         }
 
         const existingBooking = await prisma.booking.findFirst({
-            where: { serviceId, date },
+            where: { serviceId, date, cancelledAt: null },
         });
 
         if (existingBooking) {

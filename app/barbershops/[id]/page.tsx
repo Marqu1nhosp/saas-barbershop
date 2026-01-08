@@ -2,7 +2,7 @@ import { Smartphone } from "lucide-react";
 import Image from "next/image";
 import { notFound } from "next/navigation";
 
-import ServiceItem from "@/components/service-item";
+import { ServiceItem } from "@/components/service-item";
 import { PageSectionTitle } from "@/components/ui/page";
 import { getBarbershopById } from "@/data/barbershops";
 

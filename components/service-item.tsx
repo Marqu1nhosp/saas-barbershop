@@ -1,93 +1,96 @@
 "use client";
 
 import Image from "next/image";
-import React, { useState } from "react";
+import { useState } from "react";
 
 import { BookingSheet } from "@/components/booking-sheet";
 import { Button } from "@/components/ui/button";
-import { Card, CardAction, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+    Card,
+    CardAction,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from "@/components/ui/card";
+import { Barbershop } from "@/generated/prisma/client";
 
-type Service = {
-    id: string;
-    name: string;
-    description?: string | null;
-    priceInCents?: number | null;
-    imageUrl?: string | null;
-    barbershopId?: string;
+type ServiceItemProps = {
+    service: {
+        id: string;
+        name: string;
+        description?: string | null;
+        priceInCents?: number | null;
+        imageUrl?: string | null;
+        barbershopId: string;
+    };
+    barbershop: Barbershop;
 };
 
-type Barbershop = {
-    id: string;
-    name: string;
-};
-
-export default function ServiceItem({
-    service,
-    barbershop,
-}: {
-    service: Service;
-    barbershop?: Barbershop;
-}) {
+export function ServiceItem({ service, barbershop }: ServiceItemProps) {
     const [isBookingOpen, setIsBookingOpen] = useState(false);
-    const price = service.priceInCents
-        ? new Intl.NumberFormat("pt-BR", {
-            style: "currency",
-            currency: "BRL",
-        }).format(service.priceInCents / 100)
-        : "";
+
+    const price =
+        service.priceInCents != null
+            ? new Intl.NumberFormat("pt-BR", {
+                style: "currency",
+                currency: "BRL",
+            }).format(service.priceInCents / 100)
+            : null;
 
     return (
         <>
             <Card className="p-3">
                 <CardHeader className="flex items-start gap-4 p-0">
-                    <div className="relative shrink-0 w-20 h-20 rounded-md bg-muted overflow-hidden">
+                    <div className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md bg-muted">
                         {service.imageUrl ? (
                             <Image
                                 src={service.imageUrl}
                                 alt={service.name}
                                 fill
                                 className="object-cover"
-                                sizes="(max-width: 640px) 4rem, 5rem"
+                                sizes="80px"
                             />
                         ) : (
-                            <div className="flex items-center justify-center w-full h-full">
-                                <span className="text-base font-semibold text-black">{price || ""}</span>
+                            <div className="flex h-full w-full items-center justify-center text-sm font-semibold">
+                                {price}
                             </div>
                         )}
                     </div>
 
+
                     <div className="flex-1">
                         <CardTitle className="text-sm font-medium">
-                            <span>{service.name}</span>
+                            {service.name}
                         </CardTitle>
+
                         {service.description && (
-                            <CardDescription className="mt-1">{service.description}</CardDescription>
+                            <CardDescription className="mt-1">
+                                {service.description}
+                            </CardDescription>
                         )}
+
                         {price && (
-                            <div className="mt-2 text-sm font-semibold text-black">{price}</div>
+                            <div className="mt-2 text-sm font-semibold text-black">
+                                {price}
+                            </div>
                         )}
                     </div>
 
+                    {/* Action */}
                     <CardAction>
-                        <Button
-                            variant="default"
-                            size="sm"
-                            onClick={() => setIsBookingOpen(true)}
-                        >
+                        <Button size="sm" onClick={() => setIsBookingOpen(true)}>
                             Reservar
                         </Button>
                     </CardAction>
                 </CardHeader>
             </Card>
 
-            {barbershop && (
-                <BookingSheet
-                    open={isBookingOpen}
-                    onOpenChange={setIsBookingOpen}
-                    service={service}
-                    barbershop={barbershop}
-                />
-            )}
+            <BookingSheet
+                open={isBookingOpen}
+                onOpenChange={setIsBookingOpen}
+                service={service}
+                barbershop={barbershop}
+            />
         </>
     );
 }
