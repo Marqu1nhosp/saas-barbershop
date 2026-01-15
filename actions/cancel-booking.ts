@@ -1,13 +1,15 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { returnValidationErrors } from "next-safe-action";
+import Stripe from "stripe";
 import { z } from "zod";
 
 import { protectedActionClient } from "@/lib/action-client";
 import prisma from "@/lib/prisma";
 
 const inputSchema = z.object({
-    bookingId: z.string().uuid(),
+    bookingId: z.uuid(),
 });
 
 export const cancelBooking = protectedActionClient
@@ -35,14 +37,40 @@ export const cancelBooking = protectedActionClient
             });
         }
 
-        const updatedBooking = await prisma.booking.update({
+        if (booking.stripeChargeId) {
+            if (!process.env.STRIPE_SECRET_KEY) {
+                return returnValidationErrors(inputSchema, {
+                    _errors: ["Chave secreta do Stripe não está definida"],
+                });
+            }
+            try {
+                const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+                    apiVersion: "2025-07-30.basil",
+                });
+
+                await stripe.refunds.create({
+                    charge: booking.stripeChargeId,
+                    reason: 'requested_by_customer',
+                });
+            } catch (error) {
+                console.log(error);
+                return returnValidationErrors(inputSchema, {
+                    _errors: ["Não foi possível processar o reembolso pelo Stripe"],
+                });
+            }
+        }
+
+        const cancelledBooking = await prisma.booking.update({
             where: { id: bookingId },
             data: {
                 cancelledAt: new Date(),
             },
         });
 
-        return updatedBooking;
+        revalidatePath("/");
+        revalidatePath("/bookings");
+
+        return cancelledBooking;
     });
 
 

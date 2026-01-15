@@ -29,12 +29,21 @@ export const POST = async (req: Request) => {
     if (event.type === "checkout.session.completed") {
         const session = event.data.object;
         const metadata = metadataSchema.parse(session.metadata);
+        const expandedSession = await stripe.checkout.sessions.retrieve(session.id, {
+            expand: ["payment_intent"],
+        });
+        const paymentIntent = expandedSession.payment_intent as Stripe.PaymentIntent;
+        const chargeId = typeof paymentIntent.latest_charge === "string"
+            ? paymentIntent.latest_charge
+            : paymentIntent.latest_charge?.id;
+
         await prisma.booking.create({
             data: {
                 serviceId: metadata.serviceId,
                 barbershopId: metadata.barbershopId,
                 userId: metadata.userId,
-                date: metadata.date
+                date: metadata.date,
+                stripeChargeId: chargeId,
             }
         });
     }

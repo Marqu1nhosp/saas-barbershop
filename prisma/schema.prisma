@@ -102,14 +102,15 @@ model Verification {
 }
 
 model Booking {
-  id           String   @id @default(uuid())
-  userId       String
-  barbershopId String
-  serviceId    String
-  date         DateTime @db.Timestamptz()
-  cancelledAt  DateTime? @db.Timestamptz() 
-  createdAt    DateTime @default(now()) @db.Timestamptz()
-  updatedAt    DateTime @updatedAt @db.Timestamptz()
+  id             String    @id @default(uuid())
+  stripeChargeId String?
+  userId         String
+  barbershopId   String
+  serviceId      String
+  date           DateTime  @db.Timestamptz()
+  cancelledAt    DateTime? @db.Timestamptz()
+  createdAt      DateTime  @default(now()) @db.Timestamptz()
+  updatedAt      DateTime  @updatedAt @db.Timestamptz()
 
   user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   barbershop Barbershop        @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
