@@ -1,0 +1,372 @@
+'use server';
+
+import {
+    endOfDay,
+    endOfMonth,
+    endOfWeek,
+    startOfDay,
+    startOfMonth,
+    startOfWeek
+} from 'date-fns';
+
+import { prisma } from '@/lib/prisma';
+
+export interface DashboardMetrics {
+    bookingsToday: number;
+    bookingsMonth: number;
+    revenueToday: number;
+    revenueMonth: number;
+    clientsCount: number;
+}
+
+export interface WeeklyBookingData {
+    day: string;
+    count: number;
+}
+
+export interface PopularService {
+    name: string;
+    count: number;
+}
+
+export interface BookingData {
+    id: string;
+    client: string;
+    service: string;
+    professional: string;
+    date: string;
+    time: string;
+    status: string;
+}
+
+export interface FinancialMetrics {
+    totalRevenue: number;
+    averageTicket: number;
+    mostProfitableService: string;
+    maxRevenueService: number;
+}
+
+export interface MonthlyRevenueData {
+    month: string;
+    revenue: number;
+    [key: string]: string | number;
+}
+
+export async function getDashboardMetrics(barbershopId: string): Promise<DashboardMetrics> {
+    const now = new Date();
+
+    // HOJE (UTC)
+    const startOfToday = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        0, 0, 0, 0
+    ));
+
+    const endOfToday = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        now.getUTCDate(),
+        23, 59, 59, 999
+    ));
+
+    // MÊS ATUAL (UTC)
+    const startOfCurrentMonth = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth(),
+        1,
+        0, 0, 0, 0
+    ));
+
+    const endOfCurrentMonth = new Date(Date.UTC(
+        now.getUTCFullYear(),
+        now.getUTCMonth() + 1,
+        0,
+        23, 59, 59, 999
+    ));
+
+    //  Agendamentos do dia
+    const bookingsToday = await prisma.booking.count({
+        where: {
+            barbershopId,
+            cancelledAt: null,
+            date: {
+                gte: startOfToday,
+                lte: endOfToday,
+            },
+        },
+    });
+
+    //  Agendamentos do mês
+    const bookingsMonth = await prisma.booking.count({
+        where: {
+            barbershopId,
+            cancelledAt: null,
+            date: {
+                gte: startOfCurrentMonth,
+                lte: endOfCurrentMonth,
+            },
+        },
+    });
+
+    //  Faturamento do dia
+    const bookingsTodayWithServices = await prisma.booking.findMany({
+        where: {
+            barbershopId,
+            cancelledAt: null,
+            date: {
+                gte: startOfToday,
+                lte: endOfToday,
+            },
+        },
+        include: { service: true },
+    });
+
+    const revenueToday =
+        bookingsTodayWithServices.reduce(
+            (sum, booking) => sum + (booking.service?.priceInCents ?? 0),
+            0
+        ) / 100;
+
+    //  Faturamento do mês
+    const bookingsMonthWithServices = await prisma.booking.findMany({
+        where: {
+            barbershopId,
+            cancelledAt: null,
+            date: {
+                gte: startOfCurrentMonth,
+                lte: endOfCurrentMonth,
+            },
+        },
+        include: { service: true },
+    });
+
+    const revenueMonth =
+        bookingsMonthWithServices.reduce(
+            (sum, booking) => sum + (booking.service?.priceInCents ?? 0),
+            0
+        ) / 100;
+
+    //  Clientes únicos do mês
+    const clientsAttended = await prisma.booking.groupBy({
+        by: ['userId'],
+        where: {
+            barbershopId,
+            cancelledAt: null,
+            date: {
+                gte: startOfCurrentMonth,
+                lte: endOfCurrentMonth,
+            },
+        },
+    });
+
+    return {
+        bookingsToday,
+        bookingsMonth,
+        revenueToday,
+        revenueMonth,
+        clientsCount: clientsAttended.length,
+    };
+}
+
+export async function getWeeklyBookings(barbershopId: string): Promise<WeeklyBookingData[]> {
+    const today = new Date();
+    const weekStart = startOfWeek(today, { weekStartsOn: 1 });
+    const weekEnd = endOfWeek(today, { weekStartsOn: 1 });
+
+    const bookings = await prisma.booking.findMany({
+        where: {
+            barbershopId,
+            date: {
+                gte: weekStart,
+                lte: weekEnd,
+            },
+        },
+        include: {
+            service: true,
+        },
+    });
+
+    const days = ['Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sab', 'Dom'];
+    const data = Array(7).fill(0);
+
+    bookings.forEach((booking) => {
+        const dayIndex = booking.date.getDay();
+        data[dayIndex === 0 ? 6 : dayIndex - 1]++;
+    });
+
+    return data.map((count, index) => ({
+        day: days[index],
+        count,
+    }));
+}
+
+export async function getMostPopularServices(barbershopId: string): Promise<PopularService[]> {
+    const today = new Date();
+    const startOfCurrentMonth = startOfMonth(today);
+    const endOfCurrentMonth = endOfMonth(today);
+
+    const services = await prisma.booking.groupBy({
+        by: ['serviceId'],
+        where: {
+            barbershopId,
+            date: {
+                gte: startOfCurrentMonth,
+                lte: endOfCurrentMonth,
+            },
+        },
+        _count: {
+            serviceId: true,
+        },
+        orderBy: {
+            _count: {
+                serviceId: 'desc',
+            },
+        },
+        take: 5,
+    });
+
+    const servicesWithDetails = await Promise.all(
+        services.map(async (service) => {
+            const details = await prisma.barbershopService.findUnique({
+                where: { id: service.serviceId },
+            });
+            return {
+                name: details?.name || 'Unknown',
+                count: service._count.serviceId,
+            };
+        })
+    );
+
+    return servicesWithDetails;
+}
+
+export async function getBookings(barbershopId: string, date?: string): Promise<BookingData[]> {
+    const where: { barbershopId: string; date?: { gte: Date; lte: Date } } = { barbershopId };
+
+    if (date) {
+        const startOfDate = startOfDay(new Date(date));
+        const endOfDate = endOfDay(new Date(date));
+        where.date = {
+            gte: startOfDate,
+            lte: endOfDate,
+        };
+    }
+
+    const bookings = await prisma.booking.findMany({
+        where,
+        include: {
+            service: true,
+            user: true,
+        },
+        orderBy: {
+            date: 'asc',
+        },
+    });
+
+    return bookings.map((booking) => ({
+        id: booking.id,
+        client: booking.user?.name || 'Desconhecido',
+        service: booking.service?.name || 'Serviço desconhecido',
+        professional: 'N/A',
+        date: booking.date.toISOString().split('T')[0],
+        time: booking.date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
+        status: booking.cancelledAt ? 'cancelado' : 'confirmado',
+    }));
+}
+
+export async function getFinancialMetrics(barbershopId: string): Promise<FinancialMetrics> {
+    const today = new Date();
+    const startOfCurrentMonth = startOfMonth(today);
+    const endOfCurrentMonth = endOfMonth(today);
+
+    // Total faturado no mês
+    const bookingsMonth = await prisma.booking.findMany({
+        where: {
+            barbershopId,
+            date: {
+                gte: startOfCurrentMonth,
+                lte: endOfCurrentMonth,
+            },
+        },
+        include: {
+            service: true,
+        },
+    });
+
+    const totalRevenue = bookingsMonth.reduce((sum, booking) => {
+        return sum + (booking.service?.priceInCents || 0);
+    }, 0) / 100;
+
+    const averageTicket = bookingsMonth.length > 0 ? totalRevenue / bookingsMonth.length : 0;
+
+    // Serviço mais lucrativo
+    const serviceRevenue = new Map<string, { name: string; revenue: number }>();
+    bookingsMonth.forEach((booking) => {
+        const key = booking.service?.id || 'unknown';
+        const existing = serviceRevenue.get(key) || { name: booking.service?.name || 'Desconhecido', revenue: 0 };
+        existing.revenue += (booking.service?.priceInCents || 0) / 100;
+        serviceRevenue.set(key, existing);
+    });
+
+    let mostProfitableService = 'N/A';
+    let maxRevenue = 0;
+    serviceRevenue.forEach((data) => {
+        if (data.revenue > maxRevenue) {
+            maxRevenue = data.revenue;
+            mostProfitableService = data.name;
+        }
+    });
+
+    return {
+        totalRevenue,
+        averageTicket,
+        mostProfitableService,
+        maxRevenueService: maxRevenue,
+    };
+}
+
+export async function getMonthlyRevenue(barbershopId: string): Promise<MonthlyRevenueData[]> {
+    // Pegar últimos 6 meses
+    const months = [];
+    const data = [];
+
+    for (let i = 5; i >= 0; i--) {
+        const date = new Date(new Date().getFullYear(), new Date().getMonth() - i, 1);
+        const startOfMonth = startOfDay(new Date(date.getFullYear(), date.getMonth(), 1));
+        const endOfMonth = endOfDay(new Date(date.getFullYear(), date.getMonth() + 1, 0));
+
+        const monthName = date.toLocaleString('pt-BR', { month: 'short' });
+        months.push(monthName.charAt(0).toUpperCase() + monthName.slice(1));
+
+        const bookings = await prisma.booking.findMany({
+            where: {
+                barbershopId,
+                date: {
+                    gte: startOfMonth,
+                    lte: endOfMonth,
+                },
+            },
+            include: {
+                service: true,
+            },
+        });
+
+        const revenue = bookings.reduce((sum, booking) => {
+            return sum + (booking.service?.priceInCents || 0);
+        }, 0) / 100;
+
+        data.push({ month: months[months.length - 1], revenue });
+    }
+
+    return data;
+}
+
+export async function getBarbershopName(barbershopId: string): Promise<string | null> {
+    const barbershop = await prisma.barbershop.findUnique({
+        where: { id: barbershopId },
+    });
+
+    console.log('Barbershop fetched:', barbershop);
+    return barbershop ? barbershop.name : null;
+}   

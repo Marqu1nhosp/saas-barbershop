@@ -1,4 +1,5 @@
 import { PrismaPg } from "@prisma/adapter-pg";
+import bcrypt from "bcrypt";
 
 import { PrismaClient } from "../generated/prisma/client";
 
@@ -8,6 +9,54 @@ const prisma = new PrismaClient({
 
 async function seedDatabase() {
     try {
+        // Criar usuários de teste
+        const adminPassword = await bcrypt.hash("admin123", 10);
+        const employeePassword = await bcrypt.hash("employee123", 10);
+
+        // Usuário Admin
+        await prisma.user.upsert({
+            where: { email: "admin@barbearia.com" },
+            update: {},
+            create: {
+                id: "admin-user-1",
+                name: "Admin Barbearia",
+                email: "admin@barbearia.com",
+                password: adminPassword,
+                role: "ADMIN",
+            },
+        });
+
+        // Usuário Funcionário 1
+        await prisma.user.upsert({
+            where: { email: "barbeiro1@barbearia.com" },
+            update: {},
+            create: {
+                id: "employee-user-1",
+                name: "Carlos Barbeiro",
+                email: "barbeiro1@barbearia.com",
+                password: employeePassword,
+                role: "EMPLOYEE",
+            },
+        });
+
+        // Usuário Funcionário 2
+        await prisma.user.upsert({
+            where: { email: "barbeiro2@barbearia.com" },
+            update: {},
+            create: {
+                id: "employee-user-2",
+                name: "Pedro Barbeiro",
+                email: "barbeiro2@barbearia.com",
+                password: employeePassword,
+                role: "EMPLOYEE",
+            },
+        });
+
+        console.log("✅ Usuários criados com sucesso:");
+        console.log("   Admin: admin@barbearia.com / admin123");
+        console.log("   Funcionário 1: barbeiro1@barbearia.com / employee123");
+        console.log("   Funcionário 2: barbeiro2@barbearia.com / employee123");
+
         const images = [
             "https://utfs.io/f/c97a2dc9-cf62-468b-a851-bfd2bdde775f-16p.png",
             "https://utfs.io/f/45331760-899c-4b4b-910e-e00babb6ed81-16q.png",
@@ -122,6 +171,50 @@ async function seedDatabase() {
                 },
             });
 
+            // Criar usuário específico para a Barbearia Vintage (primeira barbearia)
+            if (i === 0) {
+                const vintagePassword = await bcrypt.hash("vintage123", 10);
+                await prisma.user.upsert({
+                    where: { email: "owner@barbeariavintage.com" },
+                    update: {
+                        password: vintagePassword,
+                        role: "ADMIN",
+                    },
+                    create: {
+                        id: "vintage-owner-1",
+                        name: "Dono Barbearia Vintage",
+                        email: "owner@barbeariavintage.com",
+                        password: vintagePassword,
+                        role: "ADMIN",
+                    },
+                });
+                console.log("✅ Usuário Barbearia Vintage criado:");
+                console.log("   Email: owner@barbeariavintage.com");
+                console.log("   Senha: vintage123");
+            }
+
+            if (i === 1) {
+                const corteestiloPassword = await bcrypt.hash("corteestilo123", 10);
+                await prisma.user.upsert({
+                    where: { email: "owner@corteestilo.com" },
+                    update: {
+                        password: corteestiloPassword,
+                        role: "ADMIN",
+                    },
+                    create: {
+                        id: "corteestilo-owner-1",
+                        name: "Dono Barbearia Corte & Estilo",
+                        email: "owner@corteestilo.com",
+                        password: corteestiloPassword,
+                        role: "ADMIN",
+                    },
+                });
+
+                console.log("✅ Usuário corte estilo criado:");
+                console.log("   Email: owner@corteestilo.com");
+                console.log("   Senha: corteestilo123");
+            }
+
             for (const service of services) {
                 await prisma.barbershopService.create({
                     data: {
@@ -142,6 +235,7 @@ async function seedDatabase() {
         }
 
         // Fechar a conexão com o banco de dados
+        console.log("✅ Banco de dados populado com sucesso!");
         await prisma.$disconnect();
     } catch (error) {
         console.error("Erro ao criar as barbearias:", error);
