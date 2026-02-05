@@ -82,7 +82,7 @@ export default function AppointmentsPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-3rem font-bold text-slate-900">Agendamentos</h1>
-                <Button>Novo agendamento</Button>
+                <Button disabled>Novo agendamento</Button>
             </div>
 
             {/* Filters */}
@@ -145,10 +145,10 @@ export default function AppointmentsPage() {
                                         </TableCell>
                                         <TableCell>
                                             <div className="flex gap-2">
-                                                <Button variant="outline" size="sm">
+                                                <Button variant="outline" size="sm" disabled>
                                                     Editar
                                                 </Button>
-                                                <Button variant="destructive" size="sm">
+                                                <Button variant="destructive" size="sm" disabled>
                                                     Cancelar
                                                 </Button>
                                             </div>

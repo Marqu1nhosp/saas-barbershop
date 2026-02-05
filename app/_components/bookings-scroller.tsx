@@ -25,13 +25,32 @@ interface Booking {
     };
 }
 
+interface BookingDetails {
+    id: string;
+    date: Date | string;
+    cancelledAt: Date | string | null;
+    service: {
+        id: string;
+        name: string;
+        imageUrl: string | null;
+        priceInCents: number | null;
+    };
+    barbershop: {
+        id: string;
+        name: string;
+        address: string;
+        imageUrl: string;
+        phones: string[];
+    };
+}
+
 interface BookingsScrollerProps {
     bookings: Booking[];
 }
 
 export function BookingsScroller({ bookings }: BookingsScrollerProps) {
     const [isSheetOpen, setIsSheetOpen] = useState(false);
-    const [bookingDetails, setBookingDetails] = useState<any>(null);
+    const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
 
     const { execute: executeGetBookingDetails } = useAction(getBookingDetails, {
         onSuccess({ data }) {

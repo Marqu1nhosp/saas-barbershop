@@ -14,10 +14,29 @@ import {
     getWeeklyBookings,
 } from '@/data/dashboard';
 
+interface DashboardMetrics {
+    bookingsToday: number
+    bookingsMonth: number
+    revenueToday: number
+    revenueMonth: number
+    clientsCount: number
+}
+
+interface WeeklyBookings {
+    day: string
+    count: number
+}
+
+interface ServicesMetrics {
+    name: string
+    count: number
+}
+
 export default function DashboardPage() {
-    const [metrics, setMetrics] = useState<any>(null);
-    const [weeklyData, setWeeklyData] = useState<any[]>([]);
-    const [servicesData, setServicesData] = useState<any[]>([]);
+    const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+    const [weeklyData, setWeeklyData] = useState<WeeklyBookings[]>([]);
+    const [servicesData, setServicesData] = useState<ServicesMetrics[]>([]);
+
     const [loading, setLoading] = useState(true);
     const [barbershopId, setBarbershopId] = useState<string | null>(null);
 
@@ -34,7 +53,6 @@ export default function DashboardPage() {
         setBarbershopId(id);
     }, []);
 
-    // 2️⃣ Depois: buscar os dados
     useEffect(() => {
         if (!barbershopId) return;
 

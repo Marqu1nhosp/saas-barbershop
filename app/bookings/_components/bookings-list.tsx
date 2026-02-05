@@ -1,12 +1,23 @@
 "use client";
 
-import { useState } from "react";
 import { useAction } from "next-safe-action/hooks";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { getBookingDetails } from "@/actions/get-booking-details";
 import { BookingDetailsSheet } from "@/components/booking-details-sheet";
 import { BookingItem } from "@/components/booking-tem";
+
+type BookingWithDetails =
+    Omit<Booking, "barbershop"> & {
+        barbershop: {
+            id: string;
+            name: string;
+            address: string;
+            imageUrl: string;
+            phones: string[];
+        };
+    };
 
 interface Booking {
     id: string;
@@ -31,7 +42,7 @@ interface BookingsListProps {
 
 export function BookingsList({ bookings }: BookingsListProps) {
     const [isSheetOpen, setIsSheetOpen] = useState(false);
-    const [bookingDetails, setBookingDetails] = useState<any>(null);
+    const [bookingDetails, setBookingDetails] = useState<BookingWithDetails | null>(null);
 
     const { execute: executeGetBookingDetails } = useAction(getBookingDetails, {
         onSuccess({ data }) {

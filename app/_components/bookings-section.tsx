@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
 import { useAction } from "next-safe-action/hooks";
+import { useState } from "react";
 import { toast } from "sonner";
 
 import { getBookingDetails } from "@/actions/get-booking-details";
@@ -26,13 +26,32 @@ interface Booking {
     };
 }
 
+interface BookingDetails {
+    id: string;
+    date: Date | string;
+    cancelledAt: Date | string | null;
+    service: {
+        id: string;
+        name: string;
+        imageUrl: string | null;
+        priceInCents: number | null;
+    };
+    barbershop: {
+        id: string;
+        name: string;
+        address: string;
+        imageUrl: string;
+        phones: string[];
+    };
+}
+
 interface BookingsSectionProps {
     bookings: Booking[];
 }
 
 export function BookingsSection({ bookings }: BookingsSectionProps) {
     const [isSheetOpen, setIsSheetOpen] = useState(false);
-    const [bookingDetails, setBookingDetails] = useState<any>(null);
+    const [bookingDetails, setBookingDetails] = useState<BookingDetails | null>(null);
 
     const { execute: executeGetBookingDetails } = useAction(getBookingDetails, {
         onSuccess({ data }) {

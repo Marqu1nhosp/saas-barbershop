@@ -1,40 +1,53 @@
 'use client';
 
+import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 
+const loginSchema = z.object({
+    email: z.string().email('Email inválido'),
+    password: z.string().min(6, 'Senha inválida'),
+});
+
+type LoginFormData = z.infer<typeof loginSchema>;
+
 export default function LoginPage() {
-    const [email, setEmail] = useState('');
-    const [password, setPassword] = useState('');
-    const [error, setError] = useState('');
-    const [loading, setLoading] = useState(false);
     const router = useRouter();
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setError('');
-        setLoading(true);
+    const {
+        register,
+        handleSubmit,
+        setError,
+        formState: { errors, isSubmitting },
+    } = useForm<LoginFormData>({
+        resolver: zodResolver(loginSchema),
+        defaultValues: {
+            email: '',
+            password: '',
+        },
+    });
 
+    const onSubmit = async (data: LoginFormData) => {
         try {
             const res = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ email, password }),
+                body: JSON.stringify(data),
             });
 
             if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error || 'Erro ao fazer login');
+                const body = await res.json();
+                throw new Error(body.error || 'Erro ao fazer login');
             }
 
             const { token, user } = await res.json();
 
-            // Armazenar token no cookie com maxAge
             document.cookie = `token=${token}; path=/; max-age=${24 * 60 * 60}`;
             localStorage.setItem('token', token);
 
@@ -42,15 +55,13 @@ export default function LoginPage() {
                 localStorage.setItem('barbershopId', user.barbershopId);
             }
 
-            // Aguardar um pouco para o cookie ser definido
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise((r) => setTimeout(r, 500));
 
-            // Redirecionar para o dashboard
             router.push('/barbershops/dashboard');
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Erro ao fazer login');
-        } finally {
-            setLoading(false);
+            setError('root', {
+                message: err instanceof Error ? err.message : 'Erro ao fazer login',
+            });
         }
     };
 
@@ -58,46 +69,54 @@ export default function LoginPage() {
         <div className="min-h-screen flex items-center justify-center bg-slate-100 p-4">
             <Card className="w-full max-w-md">
                 <CardHeader>
-                    <CardTitle className="text-2rem text-center">Login Barbearia</CardTitle>
+                    <CardTitle className="text-2rem text-center">
+                        Login Barbearia
+                    </CardTitle>
                 </CardHeader>
+
                 <CardContent>
-                    <form onSubmit={handleSubmit} className="space-y-4">
+                    <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                         <div>
                             <label className="text-sm font-medium">Email</label>
                             <Input
                                 type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
                                 placeholder="seu@email.com"
-                                required
-                                disabled={loading}
+                                disabled={isSubmitting}
+                                {...register('email')}
                             />
+                            {errors.email && (
+                                <p className="text-sm text-red-500">
+                                    {errors.email.message}
+                                </p>
+                            )}
                         </div>
+
                         <div>
                             <label className="text-sm font-medium">Senha</label>
                             <Input
                                 type="password"
-                                value={password}
-                                onChange={(e) => setPassword(e.target.value)}
                                 placeholder="••••••••"
-                                required
-                                disabled={loading}
+                                disabled={isSubmitting}
+                                {...register('password')}
                             />
+                            {errors.password && (
+                                <p className="text-sm text-red-500">
+                                    {errors.password.message}
+                                </p>
+                            )}
                         </div>
 
-                        {error && (
+                        {errors.root && (
                             <div className="flex items-center gap-2 p-3 bg-red-50 border border-red-200 rounded-md">
                                 <AlertCircle className="w-4 h-4 text-red-600" />
-                                <span className="text-sm text-red-600">{error}</span>
+                                <span className="text-sm text-red-600">
+                                    {errors.root.message}
+                                </span>
                             </div>
                         )}
 
-                        <Button
-                            type="submit"
-                            className="w-full"
-                            disabled={loading}
-                        >
-                            {loading ? 'Entrando...' : 'Entrar'}
+                        <Button type="submit" className="w-full" disabled={isSubmitting}>
+                            {isSubmitting ? 'Entrando...' : 'Entrar'}
                         </Button>
                     </form>
 

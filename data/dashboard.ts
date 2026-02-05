@@ -369,4 +369,13 @@ export async function getBarbershopName(barbershopId: string): Promise<string | 
 
     console.log('Barbershop fetched:', barbershop);
     return barbershop ? barbershop.name : null;
-}   
+}
+
+export async function getBarbershop(barbershopId: string) {
+    const barbershop = await prisma.barbershop.findUnique({
+        where: { id: barbershopId },
+    });
+
+    console.log('Barbershop fetched:', barbershop);
+    return barbershop;
+}

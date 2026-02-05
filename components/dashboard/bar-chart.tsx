@@ -1,13 +1,16 @@
 'use client';
 
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+interface WeeklyBookings {
+    day: string;
+    count: number;
+}
 interface BarChartComponentProps {
     title: string;
-    data: Array<{
-        [key: string]: string | number;
-    }>;
+    data: WeeklyBookings[];
     dataKey: string;
     xAxisKey: string;
 }
