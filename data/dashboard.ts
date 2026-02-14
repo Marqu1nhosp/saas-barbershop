@@ -379,3 +379,18 @@ export async function getBarbershop(barbershopId: string) {
     console.log('Barbershop fetched:', barbershop);
     return barbershop;
 }
+
+export async function updateBarbershop(barbershopId: string, name: string, address: string, description: string, phone: string) {
+    const uptatedBarbershop = await prisma.barbershop.update({
+        where: { id: barbershopId },
+        data: {
+            name,
+            address,
+            description,
+            phones: [phone],
+        },
+    });
+
+    return uptatedBarbershop;
+
+}
