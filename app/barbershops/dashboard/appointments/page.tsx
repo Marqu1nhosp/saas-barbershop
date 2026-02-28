@@ -1,5 +1,6 @@
 'use client';
 
+import { format, parseISO } from 'date-fns';
 import { useEffect, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -37,11 +38,13 @@ export default function AppointmentsPage() {
         const loadBookings = async () => {
             try {
                 const barbershopId = localStorage.getItem('barbershopId');
+                console.log('Barbershop ID:', barbershopId);
                 if (!barbershopId) {
                     throw new Error('Barbearia não encontrada na sessão do usuário.');
                 }
                 const data = await getBookings(barbershopId, selectedDate);
                 setBookings(data);
+                console.log('Bookings carregados:', data);
                 setFilteredBookings(data);
             } catch (error) {
                 console.error('Erro ao carregar agendamentos:', error);
@@ -136,7 +139,7 @@ export default function AppointmentsPage() {
                                         <TableCell>{booking.client}</TableCell>
                                         <TableCell>{booking.service}</TableCell>
                                         <TableCell>{booking.professional}</TableCell>
-                                        <TableCell>{booking.date}</TableCell>
+                                        <TableCell>{format(parseISO(booking.date), "dd-MM-yyyy")}</TableCell>
                                         <TableCell>{booking.time}</TableCell>
                                         <TableCell>
                                             <Badge className={getStatusColor(booking.status)}>

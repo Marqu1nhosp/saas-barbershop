@@ -4,6 +4,7 @@ import { returnValidationErrors } from "next-safe-action";
 import { z } from "zod";
 
 import { protectedActionClient } from "@/lib/action-client";
+import { checkTimeAvailability } from "@/lib/business-hours-utils";
 import prisma from "@/lib/prisma";
 
 const inputSchema = z.object({
@@ -27,6 +28,14 @@ export const createBooking = protectedActionClient
         if (!service) {
             return returnValidationErrors(inputSchema, {
                 _errors: ["Serviço não encontrado"],
+            });
+        }
+
+        // Check if time is available according to business hours
+        const timeAvailability = await checkTimeAvailability(service.barbershopId, date);
+        if (!timeAvailability.available) {
+            return returnValidationErrors(inputSchema, {
+                _errors: [timeAvailability.reason || "Horário indisponível"],
             });
         }
 

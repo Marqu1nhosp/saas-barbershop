@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getBarbershop, updateBarbershop } from '@/data/dashboard';
+import { BusinessHoursForm } from './_components/business-hours-form';
 
 const settingsSchema = z.object({
     name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
@@ -165,16 +166,23 @@ export default function SettingsPage() {
                     </TabsContent>
 
                     <TabsContent value="schedules">
-                        <Card>
-                            <CardHeader>
-                                <CardTitle>Horários de Funcionamento</CardTitle>
-                            </CardHeader>
-                            <CardContent>
-                                <p className="text-sm text-muted-foreground">
-                                    Em breve…
-                                </p>
-                            </CardContent>
-                        </Card>
+                        {(() => {
+                            const barbershopId = localStorage.getItem('barbershopId');
+                            return barbershopId ? (
+                                <BusinessHoursForm barbershopId={barbershopId} />
+                            ) : (
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Horários de Funcionamento</CardTitle>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <p className="text-sm text-muted-foreground">
+                                            Carregando...
+                                        </p>
+                                    </CardContent>
+                                </Card>
+                            );
+                        })()}
                     </TabsContent>
 
 

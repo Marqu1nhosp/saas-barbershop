@@ -150,38 +150,45 @@ export function BookingSheet({
         {selectedDate && (
           <div className="space-y-2">
             <h3 className="text-xs font-bold uppercase">Horário</h3>
-            <div className="flex gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-2">
-              {availableTimeSlots?.data?.filter((time) => {
-                if (!selectedDate) return false;
+            {availableTimeSlots?.data && availableTimeSlots.data.length > 0 ? (
+              <div className="flex gap-2 overflow-x-auto [&::-webkit-scrollbar]:hidden pb-2">
+                {availableTimeSlots.data.filter((time) => {
+                  if (!selectedDate) return false;
 
-                const [hours, minutes] = time.split(":").map(Number);
-                const slotDate = new Date(
-                  selectedDate.getFullYear(),
-                  selectedDate.getMonth(),
-                  selectedDate.getDate(),
-                  hours,
-                  minutes,
-                  0,
-                  0
-                );
+                  const [hours, minutes] = time.split(":").map(Number);
+                  const slotDate = new Date(
+                    selectedDate.getFullYear(),
+                    selectedDate.getMonth(),
+                    selectedDate.getDate(),
+                    hours,
+                    minutes,
+                    0,
+                    0
+                  );
 
-                if (selectedDate.toDateString() === now.toDateString()) {
-                  return slotDate > now;
-                }
+                  if (selectedDate.toDateString() === now.toDateString()) {
+                    return slotDate > now;
+                  }
 
-                return true;
-              }).map((time) => (
-                <Button
-                  key={time}
-                  variant={selectedTime === time ? "default" : "outline"}
-                  size="sm"
-                  onClick={() => handleTimeSelect(time)}
-                  className="shrink-0"
-                >
-                  {time}
-                </Button>
-              ))}
-            </div>
+                  return true;
+                }).map((time) => (
+                  <Button
+                    key={time}
+                    variant={selectedTime === time ? "default" : "outline"}
+                    size="sm"
+                    onClick={() => handleTimeSelect(time)}
+                    className="shrink-0"
+                  >
+                    {time}
+                  </Button>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-6 text-muted-foreground">
+                <p className="text-sm font-medium">Barbearia fechada</p>
+                <p className="text-xs">Nenhum horário disponível para este dia</p>
+              </div>
+            )}
           </div>
         )}
 

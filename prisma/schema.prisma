@@ -21,8 +21,9 @@ model Barbershop {
   imageUrl    String
   phones      String[]
 
-  services BarbershopService[]
-  bookings Booking[]
+  services      BarbershopService[]
+  bookings      Booking[]
+  businessHours BusinessHours[]
 }
 
 model BarbershopService {
@@ -40,6 +41,25 @@ model BarbershopService {
 enum Role {
   ADMIN
   EMPLOYEE
+}
+
+model BusinessHours {
+  id           String   @id @default(uuid())
+  barbershopId String
+  dayOfWeek    Int      // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
+  openingTime  String?  // Format: HH:MM (e.g., "09:00")
+  closingTime  String?  // Format: HH:MM (e.g., "18:00")
+  isClosed     Boolean  @default(false)
+  lunchStart   String?  // Format: HH:MM (optional)
+  lunchEnd     String?  // Format: HH:MM (optional)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  barbershop Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+
+  @@unique([barbershopId, dayOfWeek])
+  @@index([barbershopId])
+  @@map("business_hours")
 }
 
 model User {

@@ -394,3 +394,75 @@ export async function updateBarbershop(barbershopId: string, name: string, addre
     return uptatedBarbershop;
 
 }
+
+export interface BusinessHour {
+    id: string;
+    barbershopId: string;
+    dayOfWeek: number;
+    openingTime: string | null;
+    closingTime: string | null;
+    isClosed: boolean;
+    lunchStart: string | null;
+    lunchEnd: string | null;
+}
+
+export async function getBusinessHours(barbershopId: string): Promise<BusinessHour[]> {
+    let businessHours = await prisma.businessHours.findMany({
+        where: { barbershopId },
+        orderBy: { dayOfWeek: 'asc' },
+    });
+
+    // If no business hours exist, create defaults
+    if (businessHours.length === 0) {
+        const defaults = [
+            { dayOfWeek: 0, isClosed: true }, // Sunday
+            { dayOfWeek: 1, openingTime: '09:00', closingTime: '18:00', isClosed: false }, // Monday
+            { dayOfWeek: 2, openingTime: '09:00', closingTime: '18:00', isClosed: false }, // Tuesday
+            { dayOfWeek: 3, openingTime: '09:00', closingTime: '18:00', isClosed: false }, // Wednesday
+            { dayOfWeek: 4, openingTime: '09:00', closingTime: '18:00', isClosed: false }, // Thursday
+            { dayOfWeek: 5, openingTime: '09:00', closingTime: '18:00', isClosed: false }, // Friday
+            { dayOfWeek: 6, openingTime: '09:00', closingTime: '13:00', isClosed: false }, // Saturday
+        ];
+
+        businessHours = await Promise.all(
+            defaults.map((day: any) =>
+                prisma.businessHours.create({
+                    data: {
+                        barbershopId,
+                        ...day,
+                    },
+                })
+            )
+        );
+    }
+
+    return businessHours;
+}
+
+export async function updateBusinessHours(
+    barbershopId: string,
+    dayOfWeek: number,
+    openingTime: string | null,
+    closingTime: string | null,
+    isClosed: boolean,
+    lunchStart: string | null = null,
+    lunchEnd: string | null = null,
+) {
+    const updatedHours = await prisma.businessHours.update({
+        where: {
+            barbershopId_dayOfWeek: {
+                barbershopId,
+                dayOfWeek,
+            },
+        },
+        data: {
+            openingTime: isClosed ? null : openingTime,
+            closingTime: isClosed ? null : closingTime,
+            isClosed,
+            lunchStart,
+            lunchEnd,
+        },
+    });
+
+    return updatedHours;
+}
