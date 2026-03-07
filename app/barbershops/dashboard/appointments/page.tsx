@@ -1,11 +1,11 @@
 'use client';
 
 import { format, parseISO } from 'date-fns';
+import { Calendar, Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import {
     Table,
@@ -78,80 +78,103 @@ export default function AppointmentsPage() {
     };
 
     if (loading) {
-        return <div className="text-center py-8">Carregando agendamentos...</div>;
+        return (
+            <div className="flex items-center justify-center h-96">
+                <div className="text-center">
+                    <div className="inline-block w-12 h-12 bg-gradient-to-br from-blue-500 to-slate-600 rounded-full animate-spin mb-4"></div>
+                    <p className="text-slate-600 font-medium">Carregando agendamentos...</p>
+                </div>
+            </div>
+        );
     }
 
     return (
-        <div className="space-y-6">
-            <div className="flex justify-between items-center">
-                <h1 className="text-3rem font-bold text-slate-900">Agendamentos</h1>
-                <Button disabled>Novo agendamento</Button>
+        <div className="space-y-6 sm:space-y-8">
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 border-b border-slate-200 pb-6">
+                <div>
+                    <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">Agendamentos</h1>
+                    <p className="text-sm sm:text-base text-slate-500 mt-2">Total: {filteredBookings.length} agendamentos</p>
+                </div>
+                <Button disabled className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all">
+                    Novo agendamento
+                </Button>
             </div>
 
             {/* Filters */}
-            <div className="flex gap-4">
-                <Input
-                    placeholder="Pesquisar cliente ou serviço..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full"
-                />
-                <Input
-                    type="date"
-                    className="w-40"
-                    value={selectedDate}
-                    onChange={(e) => setSelectedDate(e.target.value)}
-                />
-                <Button variant="outline" onClick={() => {
-                    setSearchTerm('');
-                    setSelectedDate('');
-                }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
+                    <Input
+                        placeholder="Pesquisar cliente ou serviço..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-10 h-11 rounded-lg border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                    />
+                </div>
+                <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400 pointer-events-none" />
+                    <Input
+                        type="date"
+                        className="pl-10 h-11 rounded-lg border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
+                        value={selectedDate}
+                        onChange={(e) => setSelectedDate(e.target.value)}
+                    />
+                </div>
+                <Button
+                    variant="outline"
+                    onClick={() => {
+                        setSearchTerm('');
+                        setSelectedDate('');
+                    }}
+                    className="border-slate-300 hover:bg-slate-100 text-slate-700 h-11 rounded-lg"
+                >
+                    <X className="w-4 h-4 mr-2" />
                     Limpar
                 </Button>
             </div>
 
-            {/* Table */}
-            <Card>
-                <CardHeader>
-                    <CardTitle>Agendamentos ({filteredBookings.length})</CardTitle>
-                </CardHeader>
-                <CardContent>
-                    {filteredBookings.length === 0 ? (
-                        <div className="text-center py-8 text-slate-500">
-                            Nenhum agendamento encontrado
-                        </div>
-                    ) : (
+            {/* Desktop Table */}
+            {filteredBookings.length === 0 ? (
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
+                    <Calendar className="w-12 h-12 text-slate-300 mx-auto mb-4" />
+                    <p className="text-slate-500 font-medium">Nenhum agendamento encontrado</p>
+                    <p className="text-slider-400 text-sm mt-1">Tente ajustar seus filtros</p>
+                </div>
+            ) : (
+                <>
+                    <div className="hidden lg:block bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                         <Table>
                             <TableHeader>
-                                <TableRow>
-                                    <TableHead>Cliente</TableHead>
-                                    <TableHead>Serviço</TableHead>
-                                    <TableHead>Profissional</TableHead>
-                                    <TableHead>Data</TableHead>
-                                    <TableHead>Hora</TableHead>
-                                    <TableHead>Status</TableHead>
-                                    <TableHead>Ações</TableHead>
+                                <TableRow className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200 hover:bg-slate-100">
+                                    <TableHead className="font-semibold text-slate-700">Cliente</TableHead>
+                                    <TableHead className="font-semibold text-slate-700">Serviço</TableHead>
+                                    <TableHead className="font-semibold text-slate-700">Profissional</TableHead>
+                                    <TableHead className="font-semibold text-slate-700">Data</TableHead>
+                                    <TableHead className="font-semibold text-slate-700">Hora</TableHead>
+                                    <TableHead className="font-semibold text-slate-700">Status</TableHead>
+                                    <TableHead className="font-semibold text-slate-700 text-right">Ações</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
                                 {filteredBookings.map((booking) => (
-                                    <TableRow key={booking.id}>
-                                        <TableCell>{booking.client}</TableCell>
-                                        <TableCell>{booking.service}</TableCell>
-                                        <TableCell>{booking.professional}</TableCell>
-                                        <TableCell>{format(parseISO(booking.date), "dd-MM-yyyy")}</TableCell>
-                                        <TableCell>{booking.time}</TableCell>
+                                    <TableRow key={booking.id} className="border-b border-slate-200 hover:bg-slate-50 transition-colors duration-200">
+                                        <TableCell className="font-semibold text-slate-900">{booking.client}</TableCell>
+                                        <TableCell className="text-slate-600">{booking.service}</TableCell>
+                                        <TableCell className="text-slate-600">{booking.professional}</TableCell>
+                                        <TableCell className="text-slate-600">{format(parseISO(booking.date), "dd/MM/yyyy")}</TableCell>
+                                        <TableCell className="text-slate-600">{booking.time}</TableCell>
                                         <TableCell>
-                                            <Badge className={getStatusColor(booking.status)}>
+                                            <Badge className={`${getStatusColor(booking.status)} font-medium rounded-full`}>
                                                 {booking.status}
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
-                                            <div className="flex gap-2">
-                                                <Button variant="outline" size="sm" disabled>
+                                            <div className="flex justify-end gap-2">
+                                                <Button variant="outline" size="sm" disabled className="border-slate-300 hover:bg-slate-100 text-slate-700">
                                                     Editar
                                                 </Button>
-                                                <Button variant="destructive" size="sm" disabled>
+                                                <Button variant="destructive" size="sm" disabled className="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200">
                                                     Cancelar
                                                 </Button>
                                             </div>
@@ -160,9 +183,50 @@ export default function AppointmentsPage() {
                                 ))}
                             </TableBody>
                         </Table>
-                    )}
-                </CardContent>
-            </Card>
+                    </div>
+
+                    {/* Mobile Cards */}
+                    <div className="lg:hidden space-y-4">
+                        {filteredBookings.map((booking) => (
+                            <div key={booking.id} className="bg-white rounded-xl shadow-sm border border-slate-200 p-5 space-y-4">
+                                <div className="flex justify-between items-start">
+                                    <div className="flex-1">
+                                        <h3 className="font-semibold text-slate-900 text-lg">{booking.client}</h3>
+                                        <p className="text-sm text-slate-500 mt-1">{booking.service}</p>
+                                    </div>
+                                    <Badge className={`${getStatusColor(booking.status)} font-medium rounded-full ml-2`}>
+                                        {booking.status}
+                                    </Badge>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-4 text-sm">
+                                    <div>
+                                        <p className="text-slate-500 text-xs font-medium mb-1">Profissional</p>
+                                        <p className="text-slate-900 font-medium">{booking.professional}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-slate-500 text-xs font-medium mb-1">Data</p>
+                                        <p className="text-slate-900 font-medium">{format(parseISO(booking.date), "dd/MM/yyyy")}</p>
+                                    </div>
+                                    <div>
+                                        <p className="text-slate-500 text-xs font-medium mb-1">Hora</p>
+                                        <p className="text-slate-900 font-medium">{booking.time}</p>
+                                    </div>
+                                </div>
+
+                                <div className="flex gap-2 pt-2">
+                                    <Button variant="outline" size="sm" disabled className="flex-1 border-slate-300 hover:bg-slate-100 text-slate-700">
+                                        Editar
+                                    </Button>
+                                    <Button variant="destructive" size="sm" disabled className="flex-1 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200">
+                                        Cancelar
+                                    </Button>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </>
+            )}
         </div>
     );
 }

@@ -6,8 +6,6 @@ import { useEffect, useState } from 'react';
 import { BarChartComponent } from '@/components/dashboard/bar-chart';
 import { MetricCard } from '@/components/dashboard/metric-card';
 import { PieChartComponent } from '@/components/dashboard/pie-chart';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
 import {
     getDashboardMetrics,
     getMostPopularServices,
@@ -85,83 +83,87 @@ export default function DashboardPage() {
     }, [barbershopId]);
 
     if (loading) {
-        return <div className="text-center py-8">Carregando dashboard...</div>;
+        return (
+            <div className="flex items-center justify-center h-96">
+                <div className="text-center">
+                    <div className="inline-block w-12 h-12 bg-gradient-to-br from-blue-500 to-slate-600 rounded-full animate-spin mb-4"></div>
+                    <p className="text-slate-600 font-medium">Carregando dashboard...</p>
+                </div>
+            </div>
+        );
     }
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-6 sm:space-y-8 lg:space-y-10">
             {/* Header */}
-            <div className="flex justify-between items-center">
-                <div>
-                    <h1 className="text-3xl font-bold text-slate-900">Visão Geral</h1>
-                    <p className="text-sm text-slate-600 mt-1">
-                        Painel de controle da barbearia
-                    </p>
-                </div>
+            <div className="border-b border-slate-200 pb-6 sm:pb-8">
+                <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 tracking-tight">
+                    Visão Geral
+                </h1>
+                <p className="text-base sm:text-lg text-slate-500 mt-2 font-medium">
+                    Acompanhe métricas e desempenho da sua barbearia
+                </p>
             </div>
 
-            {/* Filtros (visual apenas por enquanto) */}
-            <div className="flex gap-4">
-                <Input type="date" className="w-40" />
-                <Input type="date" className="w-40" />
-                <Button>Filtrar</Button>
-            </div>
-
-            {/* Métricas */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* Métricas - Grid Responsivo */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
                 <MetricCard
-                    title="Agendamentos hoje"
+                    title="Agendamentos Hoje"
                     value={metrics?.bookingsToday ?? 0}
-                    icon={<Calendar className="w-4 h-4 text-blue-500" />}
+                    icon={<Calendar className="w-5 h-5 text-blue-500" />}
                 />
 
                 <MetricCard
-                    title="Agendamentos no mês"
+                    title="Agendamentos no Mês"
                     value={metrics?.bookingsMonth ?? 0}
-                    icon={<Calendar className="w-4 h-4 text-purple-500" />}
+                    icon={<Calendar className="w-5 h-5 text-indigo-500" />}
                 />
 
                 <MetricCard
-                    title="Faturamento hoje"
+                    title="Faturamento Hoje"
                     value={`R$ ${metrics?.revenueToday?.toFixed(2) ?? '0.00'}`}
-                    icon={<DollarSign className="w-4 h-4 text-green-500" />}
+                    icon={<DollarSign className="w-5 h-5 text-green-500" />}
                 />
 
                 <MetricCard
-                    title="Faturamento no mês"
+                    title="Faturamento no Mês"
                     value={`R$ ${metrics?.revenueMonth?.toFixed(2) ?? '0.00'}`}
-                    icon={<DollarSign className="w-4 h-4 text-emerald-500" />}
+                    icon={<DollarSign className="w-5 h-5 text-emerald-500" />}
                 />
 
                 <MetricCard
-                    title="Clientes atendidos"
+                    title="Clientes Atendidos"
                     value={metrics?.clientsCount ?? 0}
-                    icon={<Users className="w-4 h-4 text-orange-500" />}
+                    icon={<Users className="w-5 h-5 text-orange-500" />}
                 />
 
                 <MetricCard
-                    title="Taxa de ocupação"
+                    title="Taxa de Ocupação"
                     value="78%"
-                    icon={<TrendingUp className="w-4 h-4 text-red-500" />}
+                    icon={<TrendingUp className="w-5 h-5 text-rose-500" />}
                 />
             </div>
 
-            {/* Gráficos */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <BarChartComponent
-                    title="Agendamentos na semana"
-                    data={weeklyData}
-                    dataKey="count"
-                    xAxisKey="day"
-                />
+            {/* Charts Section */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-5 lg:gap-6">
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
+                    <BarChartComponent
+                        title="Agendamentos na Semana"
+                        data={weeklyData}
+                        dataKey="count"
+                        xAxisKey="day"
+                    />
+                </div>
 
-                <PieChartComponent
-                    title="Serviços mais realizados"
-                    data={servicesData.map((service) => ({
-                        name: service.name,
-                        value: service.count,
-                    }))}
-                />
+                <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4 sm:p-6">
+                    <PieChartComponent
+                        title="Serviços Mais Realizados"
+                        data={servicesData.map((service) => ({
+                            name: service.name,
+                            value: service.count,
+                        }))}
+                    />
+                </div>
             </div>
         </div>
     );

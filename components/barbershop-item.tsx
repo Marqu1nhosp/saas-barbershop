@@ -13,7 +13,7 @@ const BarbershopItem = ({ barbershop }: BarbershopItemProps) => {
             href={`/barbershops/${barbershop.id}`}
             className="relative min-h-50 min-w-72.5 rounded-xl"
         >
-            <div className="absolute top-0 left-0 z-10 h-full w-full rounded-lg bg-linear-to-t from-black to-transparent" />
+            <div className="absolute top-0 left-0 z-10 h-full w-full rounded-lg bg-gradient-to-t from-black to-transparent" />
             <Image
                 src={barbershop.imageUrl}
                 alt={barbershop.name}

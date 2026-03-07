@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart3, Calendar, DollarSign, LogOut, Settings, Users } from 'lucide-react';
+import { BarChart3, Calendar, DollarSign, LogOut, Menu, Settings, Users, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
@@ -38,11 +38,9 @@ const navItems = [
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
-    // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    const [collapsed, setCollapsed] = useState(false);
+    const [isOpen, setIsOpen] = useState(false);
     const [barbershopName, setBarbershopName] = useState<string | null>(null);
     const router = useRouter();
-
 
     useEffect(() => {
         const fetchBarbershop = async () => {
@@ -56,50 +54,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         fetchBarbershop();
     }, []);
 
-
-
     const handleLogout = async () => {
-        // Clear tokens
         document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
         localStorage.removeItem('token');
-
-        // Redirect to login
         router.push('/dashboard-login');
     };
 
     return (
-        <div className="flex min-h-screen">
-            {/* Sidebar */}
-            <aside className={cn(
-                'fixed left-0 top-0 z-40 h-screen bg-slate-900 text-white transition-all duration-300',
-                collapsed ? 'w-20' : 'w-64'
-            )}>
-                <div className="flex flex-col h-full p-4">
+        <div className="flex min-h-screen bg-slate-50">
+            {/* Sidebar Desktop */}
+            <aside className="fixed left-0 top-0 z-40 hidden md:flex w-64 h-screen bg-gradient-to-b from-slate-900 to-slate-950 text-white shadow-xl">
+                <div className="flex flex-col h-full w-full p-6">
                     {/* Logo */}
                     <div className="mb-8">
-                        <h1 className={cn(
-                            'text-xl font-bold',
-                            collapsed && 'text-center'
-                        )}>
-                            {collapsed ? 'B' : barbershopName}
-                        </h1>
+                        <h1 className="text-xl font-bold text-white truncate">{barbershopName || 'Barbearia'}</h1>
+                        <p className="text-xs text-slate-400 mt-1">Painel de Controle</p>
                     </div>
 
                     {/* Navigation */}
-                    <nav className="flex-1 space-y-2">
+                    <nav className="flex-1 space-y-1">
                         {navItems.map((item) => {
                             const Icon = item.icon;
                             return (
                                 <Link key={item.href} href={item.href}>
                                     <Button
                                         variant="ghost"
-                                        className={cn(
-                                            'w-full justify-start text-white hover:bg-slate-800',
-                                            collapsed && 'justify-center p-2'
-                                        )}
+                                        className="w-full justify-start text-slate-300 hover:bg-slate-800 hover:text-white transition-colors duration-200 rounded-lg"
                                     >
                                         <Icon className="w-5 h-5" />
-                                        {!collapsed && <span className="ml-3">{item.label}</span>}
+                                        <span className="ml-3 text-sm font-medium">{item.label}</span>
                                     </Button>
                                 </Link>
                             );
@@ -111,24 +94,88 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         <Button
                             onClick={handleLogout}
                             variant="ghost"
-                            className={cn(
-                                'w-full justify-start text-white hover:bg-slate-800',
-                                collapsed && 'justify-center p-2'
-                            )}
+                            className="w-full justify-start text-slate-300 hover:bg-red-600/10 hover:text-red-400 transition-colors duration-200 rounded-lg"
                         >
                             <LogOut className="w-5 h-5" />
-                            {!collapsed && <span className="ml-3">Sair</span>}
+                            <span className="ml-3 text-sm font-medium">Sair</span>
+                        </Button>
+                    </div>
+                </div>
+            </aside>
+
+            {/* Mobile Sidebar */}
+            {isOpen && (
+                <div
+                    className="fixed inset-0 z-30 md:hidden bg-black/50"
+                    onClick={() => setIsOpen(false)}
+                ></div>
+            )}
+
+            <aside className={cn(
+                "fixed left-0 top-0 z-40 w-64 h-screen bg-gradient-to-b from-slate-900 to-slate-950 text-white shadow-xl md:hidden transition-transform duration-300 ease-in-out",
+                isOpen ? "translate-x-0" : "-translate-x-full"
+            )}>
+                <div className="flex flex-col h-full w-full p-6">
+                    <div className="flex justify-between items-center mb-8">
+                        <h1 className="text-xl font-bold text-white">{barbershopName || 'Barbearia'}</h1>
+                        <button
+                            onClick={() => setIsOpen(false)}
+                            className="p-1 hover:bg-slate-800 rounded-lg transition-colors"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                    </div>
+
+                    <nav className="flex-1 space-y-1">
+                        {navItems.map((item) => {
+                            const Icon = item.icon;
+                            return (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    onClick={() => setIsOpen(false)}
+                                >
+                                    <Button
+                                        variant="ghost"
+                                        className="w-full justify-start text-slate-300 hover:bg-slate-800 hover:text-white transition-colors duration-200 rounded-lg"
+                                    >
+                                        <Icon className="w-5 h-5" />
+                                        <span className="ml-3 text-sm font-medium">{item.label}</span>
+                                    </Button>
+                                </Link>
+                            );
+                        })}
+                    </nav>
+
+                    <div className="border-t border-slate-700 pt-4">
+                        <Button
+                            onClick={handleLogout}
+                            variant="ghost"
+                            className="w-full justify-start text-slate-300 hover:bg-red-600/10 hover:text-red-400 transition-colors duration-200 rounded-lg"
+                        >
+                            <LogOut className="w-5 h-5" />
+                            <span className="ml-3 text-sm font-medium">Sair</span>
                         </Button>
                     </div>
                 </div>
             </aside>
 
             {/* Main Content */}
-            <main className={cn(
-                'flex-1 transition-all duration-300',
-                collapsed ? 'ml-20' : 'ml-64'
-            )}>
-                <div className="min-h-screen bg-slate-50 p-8">
+            <main className="flex-1 md:ml-64 w-full">
+                {/* Mobile Header */}
+                <div className="md:hidden sticky top-0 z-20 bg-white border-b border-slate-200 shadow-sm">
+                    <div className="flex items-center justify-between h-16 px-4">
+                        <h1 className="text-lg font-semibold text-slate-900 truncate">{barbershopName || 'Barbearia'}</h1>
+                        <button
+                            onClick={() => setIsOpen(true)}
+                            className="p-2 hover:bg-slate-100 rounded-lg transition-colors"
+                        >
+                            <Menu className="w-6 h-6 text-slate-600" />
+                        </button>
+                    </div>
+                </div>
+
+                <div className="min-h-screen bg-slate-50 p-4 sm:p-6 md:p-8">
                     {children}
                 </div>
             </main>
