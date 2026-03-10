@@ -35,19 +35,25 @@ export default function AppointmentsPage() {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        console.log('[Appointments] useEffect triggered with selectedDate:', selectedDate);
         const loadBookings = async () => {
             try {
                 const barbershopId = localStorage.getItem('barbershopId');
-                console.log('Barbershop ID:', barbershopId);
+                console.log('[Appointments] Loading bookings with:', { barbershopId, selectedDate, selectedDateLength: selectedDate?.length });
                 if (!barbershopId) {
                     throw new Error('Barbearia não encontrada na sessão do usuário.');
                 }
-                const data = await getBookings(barbershopId, selectedDate);
+
+                // Pass selectedDate only if it's not empty
+                const dateFilter = selectedDate && selectedDate.trim() !== '' ? selectedDate : undefined;
+                console.log('[Appointments] Calling getBookings with dateFilter:', dateFilter);
+
+                const data = await getBookings(barbershopId, dateFilter);
+                console.log('[Appointments] Bookings carregados:', { count: data.length, data });
                 setBookings(data);
-                console.log('Bookings carregados:', data);
                 setFilteredBookings(data);
             } catch (error) {
-                console.error('Erro ao carregar agendamentos:', error);
+                console.error('[Appointments] Erro ao carregar agendamentos:', error);
             } finally {
                 setLoading(false);
             }
@@ -57,10 +63,12 @@ export default function AppointmentsPage() {
     }, [selectedDate]);
 
     useEffect(() => {
+        console.log('[Appointments] Filtering with searchTerm:', searchTerm);
         const filtered = bookings.filter((booking) =>
             booking.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
             booking.service.toLowerCase().includes(searchTerm.toLowerCase())
         );
+        console.log('[Appointments] Filtered results:', filtered);
         setFilteredBookings(filtered);
     }, [searchTerm, bookings]);
 
@@ -118,7 +126,10 @@ export default function AppointmentsPage() {
                         type="date"
                         className="pl-10 h-11 rounded-lg border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                         value={selectedDate}
-                        onChange={(e) => setSelectedDate(e.target.value)}
+                        onChange={(e) => {
+                            console.log('[Appointments] Date changed from:', selectedDate, 'to:', e.target.value);
+                            setSelectedDate(e.target.value);
+                        }}
                     />
                 </div>
                 <Button

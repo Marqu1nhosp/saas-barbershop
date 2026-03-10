@@ -244,14 +244,51 @@ export async function getMostPopularServices(barbershopId: string): Promise<Popu
 export async function getBookings(barbershopId: string, date?: string): Promise<BookingData[]> {
     const where: { barbershopId: string; date?: { gte: Date; lte: Date } } = { barbershopId };
 
-    if (date) {
-        const startOfDate = startOfDay(new Date(date));
-        const endOfDate = endOfDay(new Date(date));
-        where.date = {
-            gte: startOfDate,
-            lte: endOfDate,
-        };
+    console.log('[getBookings-SERVER] Called with:', { barbershopId, date, dateIsEmpty: !date || date.trim() === '' });
+
+    if (date && date.trim() !== '') {
+        try {
+            // Parse a data como string YYYY-MM-DD e crie o intervalo em UTC
+            const [year, month, day] = date.split('-').map(Number);
+
+            // Inicio do dia em UTC (00:00:00)
+            const startOfDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
+            // Fim do dia em UTC (23:59:59.999)
+            const endOfDate = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+
+            console.log('[getBookings-SERVER] Date parsed successfully:', {
+                originalDate: date,
+                startOfDate: startOfDate.toISOString(),
+                endOfDate: endOfDate.toISOString()
+            });
+
+            where.date = {
+                gte: startOfDate,
+                lte: endOfDate,
+            };
+        } catch (err) {
+            console.error('[getBookings-SERVER] Error parsing date:', err, date);
+        }
+    } else {
+        console.log('[getBookings-SERVER] No date filter provided - returning all bookings');
     }
+
+    console.log('[getBookings-SERVER] Query where clause:', JSON.stringify(where, null, 2));
+
+    // First, get ALL bookings to see what we have
+    const allBookings = await prisma.booking.findMany({
+        where: { barbershopId },
+        select: {
+            id: true,
+            date: true,
+        },
+    });
+    console.log('[getBookings-SERVER] ALL bookings in barbershop (count):', allBookings.length);
+    console.log('[getBookings-SERVER] ALL bookings dates:', allBookings.map(b => ({
+        id: b.id,
+        dateISO: b.date.toISOString(),
+        dateString: b.date.toDateString(),
+    })));
 
     const bookings = await prisma.booking.findMany({
         where,
@@ -263,6 +300,14 @@ export async function getBookings(barbershopId: string, date?: string): Promise<
             date: 'asc',
         },
     });
+
+    console.log('[getBookings-SERVER] Found bookings with filter (count):', bookings.length);
+    console.log('[getBookings-SERVER] Bookings raw data:', bookings.map(b => ({
+        id: b.id,
+        date: b.date.toISOString(),
+        client: b.user?.name,
+        service: b.service?.name
+    })));
 
     return bookings.map((booking) => ({
         id: booking.id,

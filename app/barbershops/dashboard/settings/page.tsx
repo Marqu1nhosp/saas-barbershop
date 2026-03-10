@@ -15,6 +15,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getBarbershop, updateBarbershop } from '@/data/dashboard';
 
 import { BusinessHoursForm } from './_components/business-hours-form';
+import { EmployeesSection } from './_components/employees-section';
 
 const settingsSchema = z.object({
     name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
@@ -127,27 +128,27 @@ export default function SettingsPage() {
                 <p className="text-sm sm:text-base text-slate-500 mt-2">Gerencie as configurações da sua barbearia</p>
             </div>
 
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                <Tabs defaultValue="general" className="w-full">
-                    <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-slate-100 p-1 rounded-lg">
-                        <TabsTrigger value="general" className="rounded font-medium data-[state=active]:bg-white">
-                            <span className="hidden sm:inline">Geral</span>
-                            <span className="sm:hidden text-xs">Geral</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="schedules" className="rounded font-medium data-[state=active]:bg-white">
-                            <Clock className="w-4 h-4 sm:mr-2 sm:inline-block" />
-                            <span className="hidden sm:inline text-sm">Horários</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="cancellation" className="rounded font-medium data-[state=active]:bg-white hidden sm:flex">
-                            <AlertCircle className="w-4 h-4 sm:mr-2" />
-                            <span className="hidden text-sm">Cancelamento</span>
-                        </TabsTrigger>
-                        <TabsTrigger value="users" className="rounded font-medium data-[state=active]:bg-white">
-                            <Users className="w-4 h-4 sm:mr-2 sm:inline-block" />
-                            <span className="hidden sm:inline text-sm">Usuários</span>
-                        </TabsTrigger>
-                    </TabsList>
+            <Tabs defaultValue="general" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-slate-100 p-1 rounded-lg">
+                    <TabsTrigger value="general" className="rounded font-medium data-[state=active]:bg-white">
+                        <span className="hidden sm:inline">Geral</span>
+                        <span className="sm:hidden text-xs">Geral</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="schedules" className="rounded font-medium data-[state=active]:bg-white">
+                        <Clock className="w-4 h-4 sm:mr-2 sm:inline-block" />
+                        <span className="hidden sm:inline text-sm">Horários</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="cancellation" className="rounded font-medium data-[state=active]:bg-white hidden sm:flex">
+                        <AlertCircle className="w-4 h-4 sm:mr-2" />
+                        <span className="hidden text-sm">Cancelamento</span>
+                    </TabsTrigger>
+                    <TabsTrigger value="users" className="rounded font-medium data-[state=active]:bg-white">
+                        <Users className="w-4 h-4 sm:mr-2 sm:inline-block" />
+                        <span className="hidden sm:inline text-sm">Usuários</span>
+                    </TabsTrigger>
+                </TabsList>
 
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                     <TabsContent value="general" className="mt-6">
                         <Card className="border-slate-200 shadow-sm">
                             <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
@@ -207,65 +208,56 @@ export default function SettingsPage() {
                                 </div>
                             </CardContent>
                         </Card>
-                    </TabsContent>
 
-                    <TabsContent value="schedules" className="mt-6">
-                        {(() => {
-                            const barbershopId = localStorage.getItem('barbershopId');
-                            return barbershopId ? (
-                                <BusinessHoursForm barbershopId={barbershopId} />
-                            ) : (
-                                <Card className="border-slate-200 shadow-sm">
-                                    <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
-                                        <CardTitle>Horários de Funcionamento</CardTitle>
-                                    </CardHeader>
-                                    <CardContent className="pt-6">
-                                        <p className="text-sm text-slate-500">
-                                            Carregando...
-                                        </p>
-                                    </CardContent>
-                                </Card>
-                            );
-                        })()}
+                        <div className="flex justify-start pt-4">
+                            <Button
+                                type="submit"
+                                disabled={isSubmitting}
+                                className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all h-11 px-8"
+                            >
+                                {isSubmitting ? 'Salvando...' : 'Salvar alterações'}
+                            </Button>
+                        </div>
                     </TabsContent>
+                </form>
 
-                    <TabsContent value="cancellation" className="mt-6">
-                        <Card className="border-slate-200 shadow-sm">
-                            <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
-                                <CardTitle>Política de Cancelamento</CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-6">
-                                <p className="text-sm text-slate-500 font-medium">
-                                    Em breve…
-                                </p>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
+                <TabsContent value="schedules" className="mt-6">
+                    {(() => {
+                        const barbershopId = localStorage.getItem('barbershopId');
+                        return barbershopId ? (
+                            <BusinessHoursForm barbershopId={barbershopId} />
+                        ) : (
+                            <Card className="border-slate-200 shadow-sm">
+                                <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
+                                    <CardTitle>Horários de Funcionamento</CardTitle>
+                                </CardHeader>
+                                <CardContent className="pt-6">
+                                    <p className="text-sm text-slate-500">
+                                        Carregando...
+                                    </p>
+                                </CardContent>
+                            </Card>
+                        );
+                    })()}
+                </TabsContent>
 
-                    <TabsContent value="users" className="mt-6">
-                        <Card className="border-slate-200 shadow-sm">
-                            <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
-                                <CardTitle>Gerenciar Usuários</CardTitle>
-                            </CardHeader>
-                            <CardContent className="pt-6">
-                                <Button type="button" className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all">
-                                    Adicionar usuário
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
+                <TabsContent value="cancellation" className="mt-6">
+                    <Card className="border-slate-200 shadow-sm">
+                        <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
+                            <CardTitle>Política de Cancelamento</CardTitle>
+                        </CardHeader>
+                        <CardContent className="pt-6">
+                            <p className="text-sm text-slate-500 font-medium">
+                                Em breve…
+                            </p>
+                        </CardContent>
+                    </Card>
+                </TabsContent>
 
-                <div className="flex justify-start pt-4">
-                    <Button
-                        type="submit"
-                        disabled={isSubmitting}
-                        className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all h-11 px-8"
-                    >
-                        {isSubmitting ? 'Salvando...' : 'Salvar alterações'}
-                    </Button>
-                </div>
-            </form>
+                <TabsContent value="users" className="mt-6">
+                    <EmployeesSection />
+                </TabsContent>
+            </Tabs>
         </div>
     );
 }

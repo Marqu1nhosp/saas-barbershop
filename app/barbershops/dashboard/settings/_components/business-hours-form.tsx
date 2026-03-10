@@ -239,6 +239,7 @@ export function BusinessHoursForm({ barbershopId }: BusinessHoursFormProps) {
 
                                     <div className="flex justify-end pt-4">
                                         <Button
+                                            className="bg-blue-600 hover:bg-blue-700 text-white"
                                             onClick={() => handleSaveDay(day.dayOfWeek)}
                                             disabled={submitting}
                                         >
