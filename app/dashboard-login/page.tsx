@@ -9,6 +9,7 @@ import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { saveDashboardSession, clearDashboardSession } from '@/lib/use-dashboard-session';
 
 const loginSchema = z.object({
     email: z.string().email('Email inválido'),
@@ -35,6 +36,9 @@ export default function LoginPage() {
 
     const onSubmit = async (data: LoginFormData) => {
         try {
+            // Limpar qualquer sessão anterior antes de fazer login
+            clearDashboardSession();
+
             const res = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -49,7 +53,9 @@ export default function LoginPage() {
             const { token, user } = await res.json();
 
             document.cookie = `token=${token}; path=/; max-age=${24 * 60 * 60}`;
-            localStorage.setItem('token', token);
+
+            // Salvar com a chave específica do dashboard
+            saveDashboardSession(user, token);
 
             if (user.barbershopId) {
                 localStorage.setItem('barbershopId', user.barbershopId);

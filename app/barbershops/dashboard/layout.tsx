@@ -8,6 +8,7 @@ import React, { useEffect, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { getBarbershopName } from '@/data/dashboard';
 import { cn } from '@/lib/utils';
+import { useDashboardSession, clearDashboardSession } from '@/lib/use-dashboard-session';
 
 const navItems = [
     {
@@ -41,6 +42,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const [isOpen, setIsOpen] = useState(false);
     const [barbershopName, setBarbershopName] = useState<string | null>(null);
     const router = useRouter();
+    const { user } = useDashboardSession();
 
     useEffect(() => {
         const fetchBarbershop = async () => {
@@ -57,6 +59,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const handleLogout = async () => {
         document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
         localStorage.removeItem('token');
+        localStorage.removeItem('barbershopId');
+        clearDashboardSession();
         router.push('/dashboard-login');
     };
 
@@ -90,7 +94,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </nav>
 
                     {/* Logout */}
-                    <div className="border-t border-slate-700 pt-4">
+                    <div className="border-t border-slate-700 pt-4 space-y-4">
+                        {user && (
+                            <div className="px-2 py-2 bg-slate-800 rounded-lg">
+                                <p className="text-xs text-slate-400 font-semibold">USUÁRIO</p>
+                                <p className="text-sm text-white font-medium truncate">{user.name}</p>
+                            </div>
+                        )}
                         <Button
                             onClick={handleLogout}
                             variant="ghost"
@@ -147,7 +157,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         })}
                     </nav>
 
-                    <div className="border-t border-slate-700 pt-4">
+                    <div className="border-t border-slate-700 pt-4 space-y-4">
+                        {user && (
+                            <div className="px-2 py-2 bg-slate-800 rounded-lg">
+                                <p className="text-xs text-slate-400 font-semibold">USUÁRIO</p>
+                                <p className="text-sm text-white font-medium truncate">{user.name}</p>
+                            </div>
+                        )}
                         <Button
                             onClick={handleLogout}
                             variant="ghost"
