@@ -5,8 +5,19 @@ import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
 import { deleteEmployee, getEmployeesByBarbershop } from '@/actions/manage-employees';
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
+import { useDashboardSession } from '@/lib/use-dashboard-session';
 
 import { AddEmployeeDialog } from './add-employee-dialog';
 import { EditEmployeeDialog } from './edit-employee-dialog';
@@ -25,8 +36,12 @@ export function EmployeesSection() {
     const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
     const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [employeeToDelete, setEmployeeToDelete] = useState<string | null>(null);
 
     const barbershopId = typeof window !== 'undefined' ? localStorage.getItem('barbershopId') : null;
+    const { user } = useDashboardSession();
+    const isEmployee = user?.role === 'EMPLOYEE';
 
     const fetchEmployees = async () => {
         if (!barbershopId) {
@@ -70,11 +85,7 @@ export function EmployeesSection() {
     };
 
     const handleDeleteEmployee = async (id: string) => {
-        if (!barbershopId) return;
-
-        if (!confirm('Tem certeza que deseja remover este funcionário?')) {
-            return;
-        }
+        if (!barbershopId || isEmployee) return;
 
         try {
             await deleteEmployee({ id, barbershopId });
@@ -83,7 +94,15 @@ export function EmployeesSection() {
         } catch (error) {
             console.error('Error deleting employee:', error);
             toast.error('Erro ao remover funcionário');
+        } finally {
+            setDeleteConfirmOpen(false);
+            setEmployeeToDelete(null);
         }
+    };
+
+    const handleOpenDeleteConfirm = (id: string) => {
+        setEmployeeToDelete(id);
+        setDeleteConfirmOpen(true);
     };
 
     if (loading) {
@@ -107,13 +126,15 @@ export function EmployeesSection() {
                         {employees.length} funcionário{employees.length !== 1 ? 's' : ''}
                     </p>
                 </div>
-                <Button
-                    onClick={() => setIsAddDialogOpen(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2"
-                >
-                    <Plus className="w-4 h-4" />
-                    Adicionar funcionário
-                </Button>
+                {!isEmployee && (
+                    <Button
+                        onClick={() => setIsAddDialogOpen(true)}
+                        className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2"
+                    >
+                        <Plus className="w-4 h-4" />
+                        Adicionar funcionário
+                    </Button>
+                )}
             </div>
 
             {/* Desktop Table */}
@@ -146,22 +167,26 @@ export function EmployeesSection() {
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex justify-end gap-2">
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => handleEditEmployee(employee)}
-                                                    className="border-slate-300 hover:bg-blue-50 text-blue-600"
-                                                >
-                                                    <Edit2 className="w-4 h-4" />
-                                                </Button>
-                                                <Button
-                                                    variant="destructive"
-                                                    size="sm"
-                                                    onClick={() => handleDeleteEmployee(employee.id)}
-                                                    className="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
-                                                >
-                                                    <Trash2 className="w-4 h-4" />
-                                                </Button>
+                                                {!isEmployee && (
+                                                    <>
+                                                        <Button
+                                                            variant="outline"
+                                                            size="sm"
+                                                            onClick={() => handleEditEmployee(employee)}
+                                                            className="border-slate-300 hover:bg-blue-50 text-blue-600"
+                                                        >
+                                                            <Edit2 className="w-4 h-4" />
+                                                        </Button>
+                                                        <Button
+                                                            variant="destructive"
+                                                            size="sm"
+                                                            onClick={() => handleOpenDeleteConfirm(employee.id)}
+                                                            className="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
+                                                        >
+                                                            <Trash2 className="w-4 h-4" />
+                                                        </Button>
+                                                    </>
+                                                )}
                                             </div>
                                         </td>
                                     </tr>
@@ -197,24 +222,28 @@ export function EmployeesSection() {
                                 </div>
 
                                 <div className="flex gap-2 pt-2">
-                                    <Button
-                                        variant="outline"
-                                        size="sm"
-                                        onClick={() => handleEditEmployee(employee)}
-                                        className="flex-1 border-slate-300 hover:bg-blue-50 text-blue-600"
-                                    >
-                                        <Edit2 className="w-4 h-4 mr-2" />
-                                        Editar
-                                    </Button>
-                                    <Button
-                                        variant="destructive"
-                                        size="sm"
-                                        onClick={() => handleDeleteEmployee(employee.id)}
-                                        className="flex-1 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
-                                    >
-                                        <Trash2 className="w-4 h-4 mr-2" />
-                                        Remover
-                                    </Button>
+                                    {!isEmployee && (
+                                        <>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                onClick={() => handleEditEmployee(employee)}
+                                                className="flex-1 border-slate-300 hover:bg-blue-50 text-blue-600"
+                                            >
+                                                <Edit2 className="w-4 h-4 mr-2" />
+                                                Editar
+                                            </Button>
+                                            <Button
+                                                variant="destructive"
+                                                size="sm"
+                                                onClick={() => handleOpenDeleteConfirm(employee.id)}
+                                                className="flex-1 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200"
+                                            >
+                                                <Trash2 className="w-4 h-4 mr-2" />
+                                                Remover
+                                            </Button>
+                                        </>
+                                    )}
                                 </div>
                             </CardContent>
                         </Card>
@@ -240,6 +269,27 @@ export function EmployeesSection() {
                     onSuccess={handleUpdateEmployee}
                 />
             )}
+
+            {/* Delete Confirmation Dialog */}
+            <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+                <AlertDialogContent>
+                    <AlertDialogHeader>
+                        <AlertDialogTitle>Remover Funcionário</AlertDialogTitle>
+                        <AlertDialogDescription>
+                            Tem certeza que deseja remover este funcionário? Esta ação não pode ser desfeita.
+                        </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction
+                            onClick={() => employeeToDelete && handleDeleteEmployee(employeeToDelete)}
+                            className="bg-red-600 hover:bg-red-700 text-white"
+                        >
+                            Remover
+                        </AlertDialogAction>
+                    </AlertDialogFooter>
+                </AlertDialogContent>
+            </AlertDialog>
         </div>
     );
 }

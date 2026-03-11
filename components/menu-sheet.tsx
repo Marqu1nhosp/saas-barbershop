@@ -1,6 +1,7 @@
 "use client"
 import { Calendar, Home, LogIn, LogOut, MenuIcon } from "lucide-react";
 import Link from "next/link";
+import { useEffect } from "react";
 import { toast } from "sonner";
 
 import { authClient } from "@/lib/auth-client";
@@ -18,6 +19,27 @@ import {
 export function MenuSheet() {
     const { data: session } = authClient.useSession();
 
+    // Garantir que usuário logado tem role CLIENT
+    useEffect(() => {
+        if (session?.user?.id) {
+            const ensureRole = async () => {
+                try {
+                    const response = await fetch("/api/ensure-client-role", {
+                        method: "POST",
+                    });
+
+                    if (!response.ok) {
+                        console.error("[MenuSheet] Failed to fix role:", response.status);
+                    }
+                } catch (err) {
+                    console.error("[MenuSheet] Error ensuring client role:", err);
+                }
+            };
+
+            ensureRole();
+        }
+    }, [session?.user?.id]);
+
     async function handleLogin() {
         const { error } = await authClient.signIn.social({
             provider: "google",
@@ -27,6 +49,19 @@ export function MenuSheet() {
         if (error) {
             toast.error("Erro ao fazer login: " + error.message);
             return;
+        }
+
+        // Após login bem-sucedido, garantir que o usuário tem role CLIENT
+        try {
+            const response = await fetch("/api/ensure-client-role", {
+                method: "POST",
+            });
+
+            if (!response.ok) {
+                console.warn("Failed to ensure client role");
+            }
+        } catch (err) {
+            console.error("Error ensuring client role:", err);
         }
     }
 

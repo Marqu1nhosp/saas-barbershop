@@ -6,17 +6,10 @@ import { prisma } from "./prisma";
 
 export const actionClient = createSafeActionClient({
     handleServerError(e) {
-        console.error("handleServerError called with:", e);
         if (e instanceof Error) {
-            console.error("Error message:", e.message);
-            console.error("Error stack:", e.stack);
             return e.message;
         }
         return "Algo deu errado ao executar a operação.";
-    },
-    handleReturnedServerError(e) {
-        console.error("handleReturnedServerError called with:", e);
-        return e;
     },
 });
 

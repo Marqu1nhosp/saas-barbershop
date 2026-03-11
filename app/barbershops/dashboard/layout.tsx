@@ -1,14 +1,15 @@
 'use client';
 
-import { BarChart3, Calendar, DollarSign, LogOut, Menu, Settings, Users, X } from 'lucide-react';
+import { BarChart3, Calendar, DollarSign, Menu, Settings, Users, X } from 'lucide-react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
 import React, { useEffect, useState } from 'react';
 
+import { DashboardHeader } from '@/app/barbershops/dashboard/_components/dashboard-header';
+import { DashboardSessionSync } from '@/app/barbershops/dashboard/_components/dashboard-session-sync';
 import { Button } from '@/components/ui/button';
 import { getBarbershopName } from '@/data/dashboard';
+import { useDashboardSession } from '@/lib/use-dashboard-session';
 import { cn } from '@/lib/utils';
-import { useDashboardSession, clearDashboardSession } from '@/lib/use-dashboard-session';
 
 const navItems = [
     {
@@ -41,8 +42,22 @@ const navItems = [
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
     const [isOpen, setIsOpen] = useState(false);
     const [barbershopName, setBarbershopName] = useState<string | null>(null);
-    const router = useRouter();
     const { user } = useDashboardSession();
+
+    const filteredNavItems = navItems.filter((item) => {
+        // Se for funcionário, esconde Profissionais, Financeiro e Configurações
+        if (user?.role === 'EMPLOYEE') {
+            return !['professionals', 'financial', 'settings'].some(keyword => item.href.includes(keyword));
+        }
+        return true;
+    });
+
+    // Sincronizar barbershopId da sessão com localStorage
+    useEffect(() => {
+        if (user?.barbershopId) {
+            localStorage.setItem('barbershopId', user.barbershopId);
+        }
+    }, [user?.barbershopId]);
 
     useEffect(() => {
         const fetchBarbershop = async () => {
@@ -56,16 +71,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         fetchBarbershop();
     }, []);
 
-    const handleLogout = async () => {
-        document.cookie = 'token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 UTC;';
-        localStorage.removeItem('token');
-        localStorage.removeItem('barbershopId');
-        clearDashboardSession();
-        router.push('/dashboard-login');
-    };
-
     return (
         <div className="flex min-h-screen bg-slate-50">
+            <DashboardSessionSync />
             {/* Sidebar Desktop */}
             <aside className="fixed left-0 top-0 z-40 hidden md:flex w-64 h-screen bg-gradient-to-b from-slate-900 to-slate-950 text-white shadow-xl">
                 <div className="flex flex-col h-full w-full p-6">
@@ -77,7 +85,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
                     {/* Navigation */}
                     <nav className="flex-1 space-y-1">
-                        {navItems.map((item) => {
+                        {filteredNavItems.map((item) => {
                             const Icon = item.icon;
                             return (
                                 <Link key={item.href} href={item.href}>
@@ -94,21 +102,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </nav>
 
                     {/* Logout */}
-                    <div className="border-t border-slate-700 pt-4 space-y-4">
+                    <div className="border-t border-slate-700 pt-4">
+                        <p className="text-xs text-slate-400 font-semibold px-2">USUÁRIO</p>
                         {user && (
-                            <div className="px-2 py-2 bg-slate-800 rounded-lg">
-                                <p className="text-xs text-slate-400 font-semibold">USUÁRIO</p>
-                                <p className="text-sm text-white font-medium truncate">{user.name}</p>
-                            </div>
+                            <p className="text-sm text-white font-medium truncate px-2 py-2">{user.name}</p>
                         )}
-                        <Button
-                            onClick={handleLogout}
-                            variant="ghost"
-                            className="w-full justify-start text-slate-300 hover:bg-red-600/10 hover:text-red-400 transition-colors duration-200 rounded-lg"
-                        >
-                            <LogOut className="w-5 h-5" />
-                            <span className="ml-3 text-sm font-medium">Sair</span>
-                        </Button>
                     </div>
                 </div>
             </aside>
@@ -137,7 +135,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     </div>
 
                     <nav className="flex-1 space-y-1">
-                        {navItems.map((item) => {
+                        {filteredNavItems.map((item) => {
                             const Icon = item.icon;
                             return (
                                 <Link
@@ -157,21 +155,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                         })}
                     </nav>
 
-                    <div className="border-t border-slate-700 pt-4 space-y-4">
+                    <div className="border-t border-slate-700 pt-4">
+                        <p className="text-xs text-slate-400 font-semibold px-2">USUÁRIO</p>
                         {user && (
-                            <div className="px-2 py-2 bg-slate-800 rounded-lg">
-                                <p className="text-xs text-slate-400 font-semibold">USUÁRIO</p>
-                                <p className="text-sm text-white font-medium truncate">{user.name}</p>
-                            </div>
+                            <p className="text-sm text-white font-medium truncate px-2 py-2">{user.name}</p>
                         )}
-                        <Button
-                            onClick={handleLogout}
-                            variant="ghost"
-                            className="w-full justify-start text-slate-300 hover:bg-red-600/10 hover:text-red-400 transition-colors duration-200 rounded-lg"
-                        >
-                            <LogOut className="w-5 h-5" />
-                            <span className="ml-3 text-sm font-medium">Sair</span>
-                        </Button>
                     </div>
                 </div>
             </aside>
@@ -189,6 +177,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                             <Menu className="w-6 h-6 text-slate-600" />
                         </button>
                     </div>
+                </div>
+
+                {/* Desktop Header */}
+                <div className="hidden md:block sticky top-0 z-20">
+                    <DashboardHeader userName={user?.name} barbershopName={barbershopName} role={user?.role} />
                 </div>
 
                 <div className="min-h-screen bg-slate-50 p-4 sm:p-6 md:p-8">

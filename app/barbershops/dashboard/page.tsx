@@ -11,6 +11,7 @@ import {
     getMostPopularServices,
     getWeeklyBookings,
 } from '@/data/dashboard';
+import { authClient } from '@/lib/auth-client';
 
 interface DashboardMetrics {
     bookingsToday: number
@@ -37,19 +38,30 @@ export default function DashboardPage() {
 
     const [loading, setLoading] = useState(true);
     const [barbershopId, setBarbershopId] = useState<string | null>(null);
+    const { data: session, isPending: isSessionLoading } = authClient.useSession();
 
-    // 1️⃣ Primeiro: garantir que o barbershopId existe
+    // Sincronizar barbershopId da sessão com localStorage
     useEffect(() => {
-        const id = localStorage.getItem('barbershopId');
-        console.log('Barbershop ID:', id);
-
-        if (!id) {
-            console.error('Barbearia não encontrada no localStorage');
+        if (isSessionLoading) {
+            console.log('[Dashboard] Session still loading...');
             return;
         }
 
-        setBarbershopId(id);
-    }, []);
+        let id = localStorage.getItem('barbershopId');
+        console.log('[Dashboard] Storage barbershopId:', id);
+        
+        // Se não encontrar no localStorage, tenta pegar da sessão do better-auth
+        if (!id && session?.user) {
+            id = (session.user as { barbershopId?: string }).barbershopId || null;
+            console.log('[Dashboard] Session barbershopId:', id);
+            if (id) {
+                localStorage.setItem('barbershopId', id);
+            }
+        }
+
+        console.log('[Dashboard] Final barbershopId:', id);
+        setBarbershopId(id || null);
+    }, [session?.user, isSessionLoading]);
 
     useEffect(() => {
         if (!barbershopId) return;

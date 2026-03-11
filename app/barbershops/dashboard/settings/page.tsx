@@ -1,7 +1,7 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
-import { AlertCircle, Clock, Settings, Users } from 'lucide-react';
+import { AlertCircle, Clock, Settings } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
@@ -15,7 +15,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { getBarbershop, updateBarbershop } from '@/data/dashboard';
 
 import { BusinessHoursForm } from './_components/business-hours-form';
-import { EmployeesSection } from './_components/employees-section';
 
 const settingsSchema = z.object({
     name: z.string().min(3, 'Nome deve ter no mínimo 3 caracteres'),
@@ -129,7 +128,7 @@ export default function SettingsPage() {
             </div>
 
             <Tabs defaultValue="general" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 bg-slate-100 p-1 rounded-lg">
+                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 bg-slate-100 p-1 rounded-lg">
                     <TabsTrigger value="general" className="rounded font-medium data-[state=active]:bg-white">
                         <span className="hidden sm:inline">Geral</span>
                         <span className="sm:hidden text-xs">Geral</span>
@@ -141,10 +140,6 @@ export default function SettingsPage() {
                     <TabsTrigger value="cancellation" className="rounded font-medium data-[state=active]:bg-white hidden sm:flex">
                         <AlertCircle className="w-4 h-4 sm:mr-2" />
                         <span className="hidden text-sm">Cancelamento</span>
-                    </TabsTrigger>
-                    <TabsTrigger value="users" className="rounded font-medium data-[state=active]:bg-white">
-                        <Users className="w-4 h-4 sm:mr-2 sm:inline-block" />
-                        <span className="hidden sm:inline text-sm">Usuários</span>
                     </TabsTrigger>
                 </TabsList>
 
@@ -252,10 +247,6 @@ export default function SettingsPage() {
                             </p>
                         </CardContent>
                     </Card>
-                </TabsContent>
-
-                <TabsContent value="users" className="mt-6">
-                    <EmployeesSection />
                 </TabsContent>
             </Tabs>
         </div>

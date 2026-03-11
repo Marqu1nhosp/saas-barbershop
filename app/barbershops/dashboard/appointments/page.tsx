@@ -1,7 +1,7 @@
 'use client';
 
 import { format, parseISO } from 'date-fns';
-import { Calendar, Search, X } from 'lucide-react';
+import { Calendar, Plus, Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
 import { Badge } from '@/components/ui/badge';
@@ -15,7 +15,10 @@ import {
     TableHeader,
     TableRow,
 } from '@/components/ui/table';
-import { getBookings } from '@/data/dashboard';
+import { getBookings, getClientsForBarbershop, getServicesForBarbershop } from '@/data/dashboard';
+import { authClient } from '@/lib/auth-client';
+import { NewAppointmentDialog } from './_components/new-appointment-dialog';
+import { BookingActionsDialog } from './_components/booking-actions-dialog';
 
 interface BookingData {
     id: string;
@@ -27,40 +30,151 @@ interface BookingData {
     status: string;
 }
 
+interface Client {
+    id: string;
+    name: string;
+    email: string;
+}
+
+interface Service {
+    id: string;
+    name: string;
+    priceInCents: number;
+}
+
 export default function AppointmentsPage() {
     const [bookings, setBookings] = useState<BookingData[]>([]);
     const [filteredBookings, setFilteredBookings] = useState<BookingData[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedDate, setSelectedDate] = useState('');
     const [loading, setLoading] = useState(true);
+    const [isNewAppointmentOpen, setIsNewAppointmentOpen] = useState(false);
+    const [clients, setClients] = useState<Client[]>([]);
+    const [services, setServices] = useState<Service[]>([]);
+    const [barbershopId, setBarbershopId] = useState<string>('');
+    const [isSessionInitialized, setIsSessionInitialized] = useState(false);
+    const { data: session, isPending: isSessionLoading } = authClient.useSession();
 
+    // Sincronizar barbershopId da sessão com localStorage
     useEffect(() => {
-        console.log('[Appointments] useEffect triggered with selectedDate:', selectedDate);
-        const loadBookings = async () => {
+        if (isSessionLoading) {
+            console.log('[Appointments] Session still loading...');
+            return;
+        }
+
+        let barbId = localStorage.getItem('barbershopId');
+        console.log('[Appointments] Storage barbId:', barbId);
+        
+        // Se não encontrar no localStorage, tenta pegar da sessão do better-auth
+        if (!barbId && session?.user) {
+            barbId = (session.user as any).barbershopId;
+            console.log('[Appointments] Session barbId:', barbId);
+            if (barbId) {
+                localStorage.setItem('barbershopId', barbId);
+            }
+        }
+
+        console.log('[Appointments] Final barbId:', barbId);
+        setBarbershopId(barbId || '');
+        setIsSessionInitialized(true);
+    }, [session?.user, isSessionLoading]);
+
+    // Carregamento de dados quando barbershopId está pronto
+    useEffect(() => {
+        // Não executar enquanto a sessão está sendo inicializada
+        if (!isSessionInitialized || !barbershopId) {
+            console.log('[Appointments] Skipping load:', { isSessionInitialized, barbershopId });
+            if (isSessionInitialized && !barbershopId) {
+                console.error('[Appointments] Barbearia não encontrada na sessão do usuário.');
+                setLoading(false);
+            }
+            return;
+        }
+
+        const initLoad = async () => {
             try {
-                const barbershopId = localStorage.getItem('barbershopId');
-                console.log('[Appointments] Loading bookings with:', { barbershopId, selectedDate, selectedDateLength: selectedDate?.length });
-                if (!barbershopId) {
-                    throw new Error('Barbearia não encontrada na sessão do usuário.');
-                }
-
-                // Pass selectedDate only if it's not empty
-                const dateFilter = selectedDate && selectedDate.trim() !== '' ? selectedDate : undefined;
-                console.log('[Appointments] Calling getBookings with dateFilter:', dateFilter);
-
-                const data = await getBookings(barbershopId, dateFilter);
-                console.log('[Appointments] Bookings carregados:', { count: data.length, data });
+                console.log('[Appointments] Initial load with barbId:', barbershopId);
+                const data = await getBookings(barbershopId, undefined);
+                console.log('[Appointments] Initial bookings loaded:', { count: data.length, data });
                 setBookings(data);
                 setFilteredBookings(data);
+
+                // Carregar clientes e serviços para o diálogo
+                await loadClientsAndServices(barbershopId);
             } catch (error) {
-                console.error('[Appointments] Erro ao carregar agendamentos:', error);
+                console.error('[Appointments] Erro ao carregar agendamentos inicialmente:', error);
             } finally {
                 setLoading(false);
             }
         };
 
-        loadBookings();
-    }, [selectedDate]);
+        initLoad();
+    }, [barbershopId, isSessionInitialized]);
+
+    // Recarregamento quando data é selecionada
+    useEffect(() => {
+        if (selectedDate && barbershopId) {
+            const reloadByDate = async () => {
+                try {
+                    console.log('[Appointments] Reloading with date filter:', selectedDate);
+                    const data = await getBookings(barbershopId, selectedDate);
+                    console.log('[Appointments] Bookings by date loaded:', { count: data.length, data });
+                    setBookings(data);
+                    setFilteredBookings(data);
+                } catch (error) {
+                    console.error('[Appointments] Erro ao filtrar por data:', error);
+                }
+            };
+
+            reloadByDate();
+        } else if (!selectedDate && barbershopId) {
+            // Se limpou a data, recarrega todos
+            const reloadAll = async () => {
+                try {
+                    console.log('[Appointments] Clearing date filter');
+                    const data = await getBookings(barbershopId, undefined);
+                    console.log('[Appointments] All bookings reloaded:', { count: data.length, data });
+                    setBookings(data);
+                    setFilteredBookings(data);
+                } catch (error) {
+                    console.error('[Appointments] Erro ao recarregar agendamentos:', error);
+                }
+            };
+
+            reloadAll();
+        }
+    }, [selectedDate, barbershopId]);
+
+    // Polling automático a cada 5 segundos para atualizar em tempo real
+    useEffect(() => {
+        if (!barbershopId || isNewAppointmentOpen) return;
+
+        const pollInterval = setInterval(async () => {
+            try {
+                const data = await getBookings(barbershopId, selectedDate || undefined);
+                setBookings(data);
+                setFilteredBookings(data);
+            } catch (error) {
+                console.error('[Appointments] Erro no polling automático:', error);
+            }
+        }, 5000);
+
+        return () => clearInterval(pollInterval);
+    }, [barbershopId, selectedDate, isNewAppointmentOpen]);
+
+    const loadClientsAndServices = async (barbId: string) => {
+        try {
+            const [clientsData, servicesData] = await Promise.all([
+                getClientsForBarbershop(barbId),
+                getServicesForBarbershop(barbId),
+            ]);
+
+            setClients(clientsData);
+            setServices(servicesData);
+        } catch (error) {
+            console.error('[Appointments] Erro ao carregar clientes e serviços:', error);
+        }
+    };
 
     useEffect(() => {
         console.log('[Appointments] Filtering with searchTerm:', searchTerm);
@@ -104,7 +218,8 @@ export default function AppointmentsPage() {
                     <h1 className="text-3xl sm:text-4xl font-bold text-slate-900">Agendamentos</h1>
                     <p className="text-sm sm:text-base text-slate-500 mt-2">Total: {filteredBookings.length} agendamentos</p>
                 </div>
-                <Button disabled className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all">
+                <Button onClick={() => setIsNewAppointmentOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all flex items-center gap-2">
+                    <Plus className="w-4 h-4" />
                     Novo agendamento
                 </Button>
             </div>
@@ -181,14 +296,25 @@ export default function AppointmentsPage() {
                                             </Badge>
                                         </TableCell>
                                         <TableCell>
-                                            <div className="flex justify-end gap-2">
-                                                <Button variant="outline" size="sm" disabled className="border-slate-300 hover:bg-slate-100 text-slate-700">
-                                                    Editar
-                                                </Button>
-                                                <Button variant="destructive" size="sm" disabled className="bg-red-50 text-red-600 hover:bg-red-100 border border-red-200">
-                                                    Cancelar
-                                                </Button>
-                                            </div>
+                                            <BookingActionsDialog
+                                                bookingId={booking.id}
+                                                barbershopId={barbershopId}
+                                                clientName={booking.client}
+                                                serviceName={booking.service}
+                                                currentDate={format(parseISO(booking.date), "dd/MM/yyyy")}
+                                                currentTime={booking.time}
+                                                onSuccess={() => {
+                                                    setSelectedDate('');
+                                                    setSearchTerm('');
+                                                    const barbId = localStorage.getItem('barbershopId');
+                                                    if (barbId) {
+                                                        getBookings(barbId, undefined).then(data => {
+                                                            setBookings(data);
+                                                            setFilteredBookings(data);
+                                                        });
+                                                    }
+                                                }}
+                                            />
                                         </TableCell>
                                     </TableRow>
                                 ))}
@@ -226,18 +352,61 @@ export default function AppointmentsPage() {
                                 </div>
 
                                 <div className="flex gap-2 pt-2">
-                                    <Button variant="outline" size="sm" disabled className="flex-1 border-slate-300 hover:bg-slate-100 text-slate-700">
-                                        Editar
-                                    </Button>
-                                    <Button variant="destructive" size="sm" disabled className="flex-1 bg-red-50 text-red-600 hover:bg-red-100 border border-red-200">
-                                        Cancelar
-                                    </Button>
+                                    <BookingActionsDialog
+                                        bookingId={booking.id}
+                                        barbershopId={barbershopId}
+                                        clientName={booking.client}
+                                        serviceName={booking.service}
+                                        currentDate={format(parseISO(booking.date), "dd/MM/yyyy")}
+                                        currentTime={booking.time}
+                                        onSuccess={() => {
+                                            setSelectedDate('');
+                                            setSearchTerm('');
+                                            const barbId = localStorage.getItem('barbershopId');
+                                            if (barbId) {
+                                                getBookings(barbId, undefined).then(data => {
+                                                    setBookings(data);
+                                                    setFilteredBookings(data);
+                                                });
+                                            }
+                                        }}
+                                    />
                                 </div>
                             </div>
                         ))}
                     </div>
                 </>
             )}
+
+            {/* New Appointment Dialog */}
+            <NewAppointmentDialog
+                isOpen={isNewAppointmentOpen}
+                onClose={() => setIsNewAppointmentOpen(false)}
+                onSuccess={async () => {
+                    setSelectedDate('');
+                    setSearchTerm('');
+                    // Recarregar agendamentos
+                    const barbId = localStorage.getItem('barbershopId');
+                    if (barbId) {
+                        try {
+                            const data = await getBookings(barbId, undefined);
+                            setBookings(data);
+                            setFilteredBookings(data);
+                        } catch (error) {
+                            console.error('Erro ao recarregar agendamentos:', error);
+                        }
+                    }
+                }}
+                onClientCreated={async () => {
+                    // Recarregar lista de clientes quando um novo é criado
+                    if (barbershopId) {
+                        await loadClientsAndServices(barbershopId);
+                    }
+                }}
+                clients={clients}
+                services={services}
+                barbershopId={barbershopId}
+            />
         </div>
     );
 }

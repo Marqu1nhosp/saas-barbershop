@@ -41,6 +41,7 @@ model BarbershopService {
 enum Role {
   ADMIN
   EMPLOYEE
+  CLIENT
 }
 
 model BusinessHours {
@@ -69,7 +70,7 @@ model User {
   password      String?
   emailVerified Boolean   @default(false)
   image         String?
-  role          Role      @default(EMPLOYEE)
+  role          Role      @default(CLIENT)
   barbershopId  String?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

@@ -5,10 +5,11 @@ import { prisma } from '@/lib/prisma';
 
 export async function POST(req: Request) {
     try {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const { name, email, password, role } = await req.json();
 
-        // Validar dados de entrada
-        if (!name || !email || !password || !role) {
+        // Validar dados de entrada obrigatórios
+        if (!name || !email || !password) {
             return NextResponse.json({ error: 'Dados incompletos' }, { status: 400 });
         }
 
@@ -24,13 +25,17 @@ export async function POST(req: Request) {
         // Hash da senha
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // Definir role como CLIENT por padrão (usuários do SaaS)
+        // Se for necessário registrar funcionários, usar a rota de manage-employees
+        const userRole = 'CLIENT';
+
         // Criar novo usuário
         const user = await prisma.user.create({
             data: {
                 name,
                 email,
                 password: hashedPassword,
-                role: role.toUpperCase(),
+                role: userRole,
             },
         });
 

@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { returnValidationErrors } from "next-safe-action";
 import { z } from "zod";
 
+import { Role } from "@/generated/prisma/enums";
 import { actionClient } from "@/lib/action-client";
 import { extractDashboardToken, parseDashboardToken } from "@/lib/dashboard-auth";
 import { prisma } from "@/lib/prisma";
@@ -33,7 +34,7 @@ export async function getEmployeesByBarbershop(barbershopId: string) {
         const employees = await prisma.user.findMany({
             where: {
                 barbershopId,
-                role: "EMPLOYEE",
+                role: Role.EMPLOYEE,
             },
             select: {
                 id: true,
@@ -48,8 +49,8 @@ export async function getEmployeesByBarbershop(barbershopId: string) {
         });
 
         return employees;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     } catch (error) {
-        console.error("Error fetching employees:", error);
         throw new Error("Erro ao carregar funcionários");
     }
 }
@@ -61,8 +62,6 @@ export const createEmployee = actionClient
             parsedInput: { name, email, password, barbershopId },
         }) => {
             try {
-                console.log('createEmployee action called with:', { name, email, barbershopId });
-
                 // Get dashboard token from headers
                 const requestHeaders = await headers();
                 const authHeader = requestHeaders.get('authorization') ?? undefined;
@@ -71,7 +70,6 @@ export const createEmployee = actionClient
                 const token = extractDashboardToken(authHeader, cookieHeader);
 
                 if (!token) {
-                    console.log('No dashboard token found');
                     return returnValidationErrors(createEmployeeSchema, {
                         _errors: ["Você precisa estar logado no dashboard para adicionar funcionários"],
                     });
@@ -80,30 +78,32 @@ export const createEmployee = actionClient
                 const userPayload = parseDashboardToken(token);
 
                 if (!userPayload) {
-                    console.log('Invalid or expired token');
                     return returnValidationErrors(createEmployeeSchema, {
                         _errors: ["Token inválido ou expirado. Faça login novamente"],
                     });
                 }
 
                 // Check if user is admin of the barbershop
-                const adminUser = await prisma.user.findUnique({
+                let adminUser = await prisma.user.findUnique({
                     where: { id: userPayload.id },
                 });
 
-                console.log('Admin user found:', {
-                    id: adminUser?.id,
-                    role: adminUser?.role,
-                    barbershopId: adminUser?.barbershopId,
-                    incomingBarbershopId: barbershopId
-                });
-
-                if (!adminUser || adminUser.role?.toUpperCase() !== "ADMIN" || adminUser.barbershopId !== barbershopId) {
-                    console.log('Permission check failed:', {
-                        adminUserExists: !!adminUser,
-                        isAdmin: adminUser?.role?.toUpperCase() === "ADMIN",
-                        barbershopMatch: adminUser?.barbershopId === barbershopId
+                if (!adminUser) {
+                    return returnValidationErrors(createEmployeeSchema, {
+                        _errors: ["Usuário não encontrado"],
                     });
+                }
+
+                // If user is CLIENT of this barbershop, promote to ADMIN
+                if (adminUser.role === Role.CLIENT && adminUser.barbershopId === barbershopId) {
+                    adminUser = await prisma.user.update({
+                        where: { id: userPayload.id },
+                        data: { role: Role.ADMIN },
+                    });
+                }
+
+                // Verify user is now ADMIN of the barbershop
+                if (adminUser.role !== Role.ADMIN || adminUser.barbershopId !== barbershopId) {
                     return returnValidationErrors(createEmployeeSchema, {
                         _errors: [
                             "Você não tem permissão para adicionar funcionários nesta barbearia",
@@ -117,7 +117,6 @@ export const createEmployee = actionClient
                 });
 
                 if (existingUser) {
-                    console.log('Email already exists');
                     return returnValidationErrors(createEmployeeSchema, {
                         _errors: ["Email já registrado"],
                     });
@@ -131,7 +130,7 @@ export const createEmployee = actionClient
                         name,
                         email,
                         password: hashedPassword,
-                        role: "EMPLOYEE",
+                        role: Role.EMPLOYEE,
                         barbershopId,
                     },
                     select: {
@@ -143,13 +142,11 @@ export const createEmployee = actionClient
                     },
                 });
 
-                console.log('Employee created successfully:', employee);
                 return employee;
             } catch (error) {
-                console.error("Error creating employee:", error);
-                const errorMessage = error instanceof Error ? error.message : "Erro desconhecido ao criar funcionário";
+                const errorMessage = error instanceof Error ? error.message : String(error);
                 return returnValidationErrors(createEmployeeSchema, {
-                    _errors: [errorMessage],
+                    _errors: [errorMessage || "Erro desconhecido ao criar funcionário"],
                 });
             }
         }
@@ -185,7 +182,7 @@ export const updateEmployee = actionClient
                 where: { id: userPayload.id },
             });
 
-            if (!adminUser || adminUser.role?.toUpperCase() !== "ADMIN" || adminUser.barbershopId !== barbershopId) {
+            if (!adminUser || adminUser.role !== Role.ADMIN || adminUser.barbershopId !== barbershopId) {
                 return returnValidationErrors(updateEmployeeSchema, {
                     _errors: [
                         "Você não tem permissão para editar funcionários nesta barbearia",
@@ -198,7 +195,7 @@ export const updateEmployee = actionClient
                 where: {
                     id,
                     barbershopId,
-                    role: "EMPLOYEE",
+                    role: Role.EMPLOYEE,
                 },
             });
 
@@ -236,7 +233,7 @@ export const updateEmployee = actionClient
 
             return updatedEmployee;
         } catch (error) {
-            console.error("Error updating employee:", error);
+
             const errorMessage = error instanceof Error ? error.message : "Erro desconhecido ao atualizar funcionário";
             return returnValidationErrors(updateEmployeeSchema, {
                 _errors: [errorMessage],
@@ -274,7 +271,7 @@ export const deleteEmployee = actionClient
                 where: { id: userPayload.id },
             });
 
-            if (!adminUser || adminUser.role?.toUpperCase() !== "ADMIN" || adminUser.barbershopId !== barbershopId) {
+            if (!adminUser || adminUser.role !== Role.ADMIN || adminUser.barbershopId !== barbershopId) {
                 return returnValidationErrors(deleteEmployeeSchema, {
                     _errors: [
                         "Você não tem permissão para deletar funcionários nesta barbearia",
@@ -287,7 +284,7 @@ export const deleteEmployee = actionClient
                 where: {
                     id,
                     barbershopId,
-                    role: "EMPLOYEE",
+                    role: Role.EMPLOYEE,
                 },
             });
 
@@ -303,7 +300,7 @@ export const deleteEmployee = actionClient
 
             return { success: true };
         } catch (error) {
-            console.error("Error deleting employee:", error);
+
             const errorMessage = error instanceof Error ? error.message : "Erro desconhecido ao deletar funcionário";
             return returnValidationErrors(deleteEmployeeSchema, {
                 _errors: [errorMessage],
