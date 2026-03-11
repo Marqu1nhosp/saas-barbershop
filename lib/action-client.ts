@@ -14,10 +14,6 @@ export const actionClient = createSafeActionClient({
         }
         return "Algo deu errado ao executar a operação.";
     },
-    handleReturnedServerError(e) {
-        console.error("handleReturnedServerError called with:", e);
-        return e;
-    },
 });
 
 export const protectedActionClient = actionClient.use(
