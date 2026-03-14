@@ -19,4 +19,16 @@ export const auth = betterAuth({
             clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
         },
     },
+    user: {
+        fields: {
+            id: "id",
+            email: "email",
+            name: "name",
+            image: "image",
+            emailVerified: "emailVerified",
+            password: "password",
+            role: "role",
+            barbershopId: "barbershopId",
+        },
+    },
 });

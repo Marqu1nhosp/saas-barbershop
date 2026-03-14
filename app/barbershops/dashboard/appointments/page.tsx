@@ -279,7 +279,7 @@ export default function AppointmentsPage() {
                                     <TableHead className="font-semibold text-slate-700">Data</TableHead>
                                     <TableHead className="font-semibold text-slate-700">Hora</TableHead>
                                     <TableHead className="font-semibold text-slate-700">Status</TableHead>
-                                    <TableHead className="font-semibold text-slate-700 text-right">Ações</TableHead>
+                                    <TableHead className="font-semibold text-slate-700 text-center">Ações</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -295,7 +295,7 @@ export default function AppointmentsPage() {
                                                 {booking.status}
                                             </Badge>
                                         </TableCell>
-                                        <TableCell>
+                                        <TableCell className="flex justify-center items-center">
                                             <BookingActionsDialog
                                                 bookingId={booking.id}
                                                 barbershopId={barbershopId}

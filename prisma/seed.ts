@@ -179,6 +179,7 @@ async function seedDatabase() {
                     update: {
                         password: vintagePassword,
                         role: "ADMIN",
+                        barbershopId: barbershop.id,
                     },
                     create: {
                         id: "vintage-owner-1",
@@ -186,11 +187,12 @@ async function seedDatabase() {
                         email: "owner@barbeariavintage.com",
                         password: vintagePassword,
                         role: "ADMIN",
+                        barbershopId: barbershop.id,
                     },
                 });
-                console.log("✅ Usuário Barbearia Vintage criado:");
-                console.log("   Email: owner@barbeariavintage.com");
-                console.log("   Senha: vintage123");
+                console.log("Usuário Barbearia Vintage criado:");
+                console.log("Email: owner@barbeariavintage.com");
+                console.log("Senha: vintage123");
             }
 
             if (i === 1) {
@@ -200,6 +202,7 @@ async function seedDatabase() {
                     update: {
                         password: corteestiloPassword,
                         role: "ADMIN",
+                        barbershopId: barbershop.id,
                     },
                     create: {
                         id: "corteestilo-owner-1",
@@ -207,12 +210,13 @@ async function seedDatabase() {
                         email: "owner@corteestilo.com",
                         password: corteestiloPassword,
                         role: "ADMIN",
+                        barbershopId: barbershop.id,
                     },
                 });
 
-                console.log("✅ Usuário corte estilo criado:");
-                console.log("   Email: owner@corteestilo.com");
-                console.log("   Senha: corteestilo123");
+                console.log("Usuário corte estilo criado:");
+                console.log("Email: owner@corteestilo.com");
+                console.log("Senha: corteestilo123");
             }
 
             for (const service of services) {
@@ -235,7 +239,7 @@ async function seedDatabase() {
         }
 
         // Fechar a conexão com o banco de dados
-        console.log("✅ Banco de dados populado com sucesso!");
+        console.log("Banco de dados populado com sucesso!");
         await prisma.$disconnect();
     } catch (error) {
         console.error("Erro ao criar as barbearias:", error);

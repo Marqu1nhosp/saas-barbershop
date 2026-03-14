@@ -48,6 +48,11 @@ interface BookingDetailsSheetProps {
             imageUrl: string;
             phones: string[];
         };
+        employee?: {
+            id: string;
+            name: string;
+            image?: string | null;
+        } | null;
     };
 }
 
@@ -172,6 +177,33 @@ export function BookingDetailsSheet({
                             </div>
                         </div>
 
+                        {booking.employee && (
+                            <div className="space-y-2">
+                                <h3 className="text-xs font-bold uppercase">
+                                    Barbeiro
+                                </h3>
+                                <div className="rounded-lg border border-border bg-card p-4">
+                                    <div className="flex items-center gap-3">
+                                        {booking.employee.image && (
+                                            <div className="relative shrink-0 w-12 h-12 rounded-md bg-muted overflow-hidden">
+                                                <Image
+                                                    src={booking.employee.image}
+                                                    alt={booking.employee.name}
+                                                    fill
+                                                    className="object-cover"
+                                                    sizes="3rem"
+                                                />
+                                            </div>
+                                        )}
+                                        <div className="flex-1">
+                                            <p className="text-sm font-semibold">
+                                                {booking.employee.name}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {status === "confirmado" && !isCancelled && (

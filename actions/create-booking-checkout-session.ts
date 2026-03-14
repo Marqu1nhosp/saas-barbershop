@@ -10,11 +10,12 @@ import prisma from "@/lib/prisma";
 const inputSchema = z.object({
     serviceId: z.uuid(),
     date: z.coerce.date(),
+    employeeId: z.string().uuid().optional(),
 });
 
 export const createBookingCheckoutSession = protectedActionClient
     .inputSchema(inputSchema)
-    .action(async ({ parsedInput: { serviceId, date }, ctx: { user } }) => {
+    .action(async ({ parsedInput: { serviceId, date, employeeId }, ctx: { user } }) => {
         if (!process.env.STRIPE_SECRET_KEY) {
             returnValidationErrors(inputSchema, {
                 _errors: ["Chave secreta do Stripe não está definida"],
@@ -51,6 +52,7 @@ export const createBookingCheckoutSession = protectedActionClient
                 barbershopId: service.barbershopId,
                 userId: user.id,
                 date: date.toISOString(),
+                employeeId: employeeId || "auto",
             },
             line_items: [
                 {

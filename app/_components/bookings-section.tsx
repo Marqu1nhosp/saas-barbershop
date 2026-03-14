@@ -43,6 +43,11 @@ interface BookingDetails {
         imageUrl: string;
         phones: string[];
     };
+    employee?: {
+        id: string;
+        name: string;
+        image?: string | null;
+    } | null;
 }
 
 interface BookingsSectionProps {

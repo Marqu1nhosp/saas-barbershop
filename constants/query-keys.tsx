@@ -4,4 +4,9 @@ export const queryKeys = {
         barbershopId,
         date,
     ],
+    getAvailableEmployees: (barbershopId: string, dateTime?: Date) => [
+        "available-employees",
+        barbershopId,
+        dateTime,
+    ],
 }

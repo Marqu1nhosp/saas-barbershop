@@ -9,6 +9,7 @@ const metadataSchema = z.object({
     barbershopId: z.uuid(),
     userId: z.string(),
     date: z.iso.datetime(),
+    employeeId: z.string().optional(),
 });
 
 export const POST = async (req: Request) => {
@@ -43,6 +44,7 @@ export const POST = async (req: Request) => {
                 barbershopId: metadata.barbershopId,
                 userId: metadata.userId,
                 date: metadata.date,
+                employeeId: metadata.employeeId && metadata.employeeId !== "auto" ? metadata.employeeId : undefined,
                 stripeChargeId: chargeId,
             }
         });

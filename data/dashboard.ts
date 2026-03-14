@@ -258,25 +258,19 @@ export async function getBookings(barbershopId: string, date?: string): Promise<
                 gte: startOfDate,
                 lte: endOfDate,
             };
-        } catch (err) {
+        } catch {
             // Error parsing date, continue without date filter
         }
     }
 
     // First, get ALL bookings to see what we have
-    const allBookings = await prisma.booking.findMany({
-        where: { barbershopId },
-        select: {
-            id: true,
-            date: true,
-        },
-    });
 
     const bookings = await prisma.booking.findMany({
         where,
         include: {
             service: true,
             user: true,
+            employee: true,
         },
         orderBy: {
             date: 'asc',
@@ -287,7 +281,7 @@ export async function getBookings(barbershopId: string, date?: string): Promise<
         id: booking.id,
         client: booking.user?.name || 'Desconhecido',
         service: booking.service?.name || 'Serviço desconhecido',
-        professional: 'N/A',
+        professional: booking.employee?.name || 'Não atribuído',
         date: booking.date.toISOString().split('T')[0],
         time: booking.date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
         status: booking.cancelledAt ? 'cancelado' : 'confirmado',
@@ -442,7 +436,7 @@ export async function getBusinessHours(barbershopId: string): Promise<BusinessHo
         ];
 
         businessHours = await Promise.all(
-            defaults.map((day: any) =>
+            defaults.map((day) =>
                 prisma.businessHours.create({
                     data: {
                         barbershopId,
@@ -488,6 +482,11 @@ export async function getClientsForBarbershop(barbershopId: string) {
     const clients = await prisma.user.findMany({
         where: {
             role: 'CLIENT',
+            clientBookings: {
+                some: {
+                    barbershopId,
+                },
+            },
         },
         select: {
             id: true,

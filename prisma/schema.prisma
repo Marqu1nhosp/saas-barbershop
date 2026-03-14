@@ -76,7 +76,8 @@ model User {
   updatedAt     DateTime  @updatedAt
   sessions      Session[]
   accounts      Account[]
-  bookings      Booking[]
+  clientBookings      Booking[] @relation("ClientBookings")
+  employeeBookings    Booking[] @relation("EmployeeBookings")
 
   @@map("user")
 }
@@ -134,17 +135,20 @@ model Booking {
   userId         String
   barbershopId   String
   serviceId      String
+  employeeId     String?
   date           DateTime  @db.Timestamptz()
   cancelledAt    DateTime? @db.Timestamptz()
   createdAt      DateTime  @default(now()) @db.Timestamptz()
   updatedAt      DateTime  @updatedAt @db.Timestamptz()
 
-  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user       User              @relation("ClientBookings", fields: [userId], references: [id], onDelete: Cascade)
   barbershop Barbershop        @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
   service    BarbershopService @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  employee   User?             @relation("EmployeeBookings", fields: [employeeId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([barbershopId])
   @@index([serviceId])
+  @@index([employeeId])
   @@map("booking")
 }
