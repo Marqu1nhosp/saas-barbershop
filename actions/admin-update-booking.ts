@@ -12,13 +12,14 @@ const adminUpdateBookingSchema = z.object({
     bookingId: z.string("ID do agendamento inválido").min(1),
     barbershopId: z.string("ID da barbearia inválido").min(1),
     date: z.string("Data inválida").min(1),
+    employeeId: z.string().uuid().nullable().optional(),
 });
 
 export const adminUpdateBooking = actionClient
     .inputSchema(adminUpdateBookingSchema)
-    .action(async ({ parsedInput: { bookingId, barbershopId, date } }) => {
+    .action(async ({ parsedInput: { bookingId, barbershopId, date, employeeId } }) => {
         try {
-            // Get dashboard token from headers
+            // Obter token do dashboard dos headers
             const requestHeaders = await headers();
             const authHeader = requestHeaders.get('authorization') ?? undefined;
             const cookieHeader = requestHeaders.get('cookie') ?? undefined;
@@ -39,18 +40,25 @@ export const adminUpdateBooking = actionClient
                 });
             }
 
-            // Get admin user
+            // Obter usuário admin
             const adminUser = await prisma.user.findUnique({
                 where: { id: userPayload.id },
             });
 
-            if (!adminUser || adminUser.role !== "ADMIN" || adminUser.barbershopId !== barbershopId) {
+            if (!adminUser || adminUser.barbershopId !== barbershopId) {
                 return returnValidationErrors(adminUpdateBookingSchema, {
                     _errors: ["Você não tem permissão para editar agendamentos nesta barbearia"],
                 });
             }
 
-            // Get booking
+            // Verificar se o usuário é ADMIN ou EMPLOYEE
+            if (adminUser.role !== "ADMIN" && adminUser.role !== "EMPLOYEE") {
+                return returnValidationErrors(adminUpdateBookingSchema, {
+                    _errors: ["Apenas administradores e funcionários podem editar agendamentos"],
+                });
+            }
+
+            // Obter agendamento
             const booking = await prisma.booking.findUnique({
                 where: { id: bookingId },
             });
@@ -76,14 +84,14 @@ export const adminUpdateBooking = actionClient
             const bookingDate = new Date(date);
             const now = new Date();
 
-            // Check if date is in the future
+            // Verifique se a data está no futuro.
             if (bookingDate < now) {
                 return returnValidationErrors(adminUpdateBookingSchema, {
                     _errors: ["Não é possível agendar para um horário que já passou"],
                 });
             }
 
-            // Check if there's already a booking for this service at this date/time
+            // Verifique se já existe uma reserva para este serviço nesta data/hora.
             const existingBooking = await prisma.booking.findFirst({
                 where: {
                     serviceId: booking.serviceId,
@@ -99,15 +107,34 @@ export const adminUpdateBooking = actionClient
                 });
             }
 
-            // Update the booking
+            // Se um profissional foi escolhido, validar se existe e pertence à barbearia
+            if (employeeId) {
+                const employee = await prisma.user.findFirst({
+                    where: {
+                        id: employeeId,
+                        barbershopId: barbershopId,
+                        role: "EMPLOYEE",
+                    },
+                });
+
+                if (!employee) {
+                    return returnValidationErrors(adminUpdateBookingSchema, {
+                        _errors: ["Profissional não encontrado ou não pertence a esta barbearia"],
+                    });
+                }
+            }
+
+            // Atualizar o agendamento
             const updatedBooking = await prisma.booking.update({
                 where: { id: bookingId },
                 data: {
                     date: new Date(date),
+                    ...(employeeId !== undefined && { employeeId: employeeId }),
                 },
                 include: {
                     user: true,
                     service: true,
+                    employee: true,
                 },
             });
 

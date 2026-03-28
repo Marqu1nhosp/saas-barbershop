@@ -128,6 +128,7 @@ export const getDateAvailableTimeSlots = actionClient
             return true;
         });
 
+        // Retornar horários disponíveis
         return availableTimeSlots;
 
     });

@@ -36,9 +36,22 @@ export default function LoginPage() {
 
     const onSubmit = async (data: LoginFormData) => {
         try {
+            console.log('[Dashboard Login] Starting login process...');
+            
             // Limpar qualquer sessão anterior antes de fazer login
+            console.log('[Dashboard Login] Clearing previous session...');
             clearDashboardSession();
 
+            // ❌ Fazer logout do better-auth (SaaS session) para evitar conflito
+            try {
+                await fetch('/api/auth/signout', {
+                    method: 'POST',
+                });
+            } catch (err) {
+                console.log('[Dashboard Login] Signout attempt completed (may not exist)');
+            }
+
+            console.log('[Dashboard Login] Sending login request...');
             const res = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -52,19 +65,34 @@ export default function LoginPage() {
 
             const { token, user } = await res.json();
 
+            console.log('[Dashboard Login] ✅ Response received:', { 
+                token: token?.slice(0, 20) + '...', 
+                userId: user.id,
+                userRole: user.role,
+                barbershopId: user.barbershopId
+            });
+
             document.cookie = `token=${token}; path=/; max-age=${24 * 60 * 60}`;
 
             // Salvar com a chave específica do dashboard
+            console.log('[Dashboard Login] Saving dashboard session...');
             saveDashboardSession(user, token);
 
             if (user.barbershopId) {
+                console.log('[Dashboard Login] Setting barbershopId to localStorage:', user.barbershopId);
                 localStorage.setItem('barbershopId', user.barbershopId);
+            } else {
+                console.warn('[Dashboard Login] ⚠️ No barbershopId in response:', user);
             }
 
-            await new Promise((r) => setTimeout(r, 500));
+            // Maior delay para garantir que listeners sejam notificados
+            console.log('[Dashboard Login] Waiting 300ms for session sync...');
+            await new Promise((r) => setTimeout(r, 300));
 
+            console.log('[Dashboard Login] ✅ Redirecting to dashboard...');
             router.push('/barbershops/dashboard');
         } catch (err) {
+            console.error('[Dashboard Login] ❌ Login failed:', err);
             setError('root', {
                 message: err instanceof Error ? err.message : 'Erro ao fazer login',
             });

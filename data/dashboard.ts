@@ -242,7 +242,15 @@ export async function getMostPopularServices(barbershopId: string): Promise<Popu
 }
 
 export async function getBookings(barbershopId: string, date?: string): Promise<BookingData[]> {
-    const where: { barbershopId: string; date?: { gte: Date; lte: Date } } = { barbershopId };
+    const now = new Date();
+    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+
+    const where: { 
+        barbershopId: string; 
+        date?: { gte: Date; lte: Date } 
+    } = { 
+        barbershopId
+    };
 
     if (date && date.trim() !== '') {
         try {
@@ -263,7 +271,7 @@ export async function getBookings(barbershopId: string, date?: string): Promise<
         }
     }
 
-    // First, get ALL bookings to see what we have
+    // Obter TODOS os agendamentos
 
     const bookings = await prisma.booking.findMany({
         where,
@@ -272,20 +280,45 @@ export async function getBookings(barbershopId: string, date?: string): Promise<
             user: true,
             employee: true,
         },
-        orderBy: {
-            date: 'asc',
-        },
+    // Ordenação em JavaScript para lidar com lógica customizada
     });
 
-    return bookings.map((booking) => ({
-        id: booking.id,
-        client: booking.user?.name || 'Desconhecido',
-        service: booking.service?.name || 'Serviço desconhecido',
-        professional: booking.employee?.name || 'Não atribuído',
-        date: booking.date.toISOString().split('T')[0],
-        time: booking.date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }),
-        status: booking.cancelledAt ? 'cancelado' : 'confirmado',
-    }));
+    // Ordenar agendamentos: atuais/futuros primeiro (asc), depois passados (desc)
+    const sortedBookings = bookings.sort((a, b) => {
+        const aIsCurrentOrFuture = a.date >= today;
+        const bIsCurrentOrFuture = b.date >= today;
+
+        // If both are current/future or both are past, sort by date
+        if (aIsCurrentOrFuture === bIsCurrentOrFuture) {
+            if (aIsCurrentOrFuture) {
+                // Both are current/future: ascending order
+                return a.date.getTime() - b.date.getTime();
+            } else {
+                // Both are past: descending order (most recent first)
+                return b.date.getTime() - a.date.getTime();
+            }
+        }
+
+        // Current/future comes first
+        return aIsCurrentOrFuture ? -1 : 1;
+    });
+
+    return sortedBookings.map((booking) => {
+        // Formatar hora manualmente para evitar problemas de timezone
+        const hours = booking.date.getUTCHours().toString().padStart(2, '0');
+        const minutes = booking.date.getUTCMinutes().toString().padStart(2, '0');
+        const time = `${hours}:${minutes}`;
+
+        return {
+            id: booking.id,
+            client: booking.user?.name || 'Desconhecido',
+            service: booking.service?.name || 'Serviço desconhecido',
+            professional: booking.employee?.name || 'Não atribuído',
+            date: booking.date.toISOString().split('T')[0],
+            time,
+            status: booking.cancelledAt ? 'cancelado' : 'confirmado',
+        };
+    });
 }
 
 export async function getFinancialMetrics(barbershopId: string): Promise<FinancialMetrics> {
@@ -482,11 +515,7 @@ export async function getClientsForBarbershop(barbershopId: string) {
     const clients = await prisma.user.findMany({
         where: {
             role: 'CLIENT',
-            clientBookings: {
-                some: {
-                    barbershopId,
-                },
-            },
+            barbershopId: barbershopId,
         },
         select: {
             id: true,

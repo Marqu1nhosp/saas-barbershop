@@ -11,7 +11,7 @@ import {
     getMostPopularServices,
     getWeeklyBookings,
 } from '@/data/dashboard';
-import { authClient } from '@/lib/auth-client';
+import { useDashboardSession } from '@/lib/use-dashboard-session';
 
 interface DashboardMetrics {
     bookingsToday: number
@@ -38,30 +38,32 @@ export default function DashboardPage() {
 
     const [loading, setLoading] = useState(true);
     const [barbershopId, setBarbershopId] = useState<string | null>(null);
-    const { data: session, isPending: isSessionLoading } = authClient.useSession();
+    const { user: dashboardUser, isLoading: isDashboardLoading } = useDashboardSession();
 
-    // Sincronizar barbershopId da sessão com localStorage
+    // Usar barbershopId da sessão do dashboard (JWT)
     useEffect(() => {
-        if (isSessionLoading) {
-            console.log('[Dashboard] Session still loading...');
+        console.log('[Dashboard] useEffect triggered:', { isDashboardLoading, dashboardUser });
+        
+        if (isDashboardLoading) {
+            console.log('[Dashboard] Dashboard session still loading...');
             return;
         }
 
-        let id = localStorage.getItem('barbershopId');
-        console.log('[Dashboard] Storage barbershopId:', id);
-        
-        // Se não encontrar no localStorage, tenta pegar da sessão do better-auth
-        if (!id && session?.user) {
-            id = (session.user as { barbershopId?: string }).barbershopId || null;
-            console.log('[Dashboard] Session barbershopId:', id);
-            if (id) {
-                localStorage.setItem('barbershopId', id);
+        if (dashboardUser?.barbershopId) {
+            console.log('[Dashboard] ✅ Using barbershopId from dashboard session:', dashboardUser.barbershopId);
+            setBarbershopId(dashboardUser.barbershopId);
+            localStorage.setItem('barbershopId', dashboardUser.barbershopId);
+        } else {
+            // Verificar se estamos em uma rota de logout (normal e esperado)
+            const isDashboardRoute = typeof window !== 'undefined' && window.location.pathname.includes('/barbershops/dashboard');
+            if (isDashboardRoute && dashboardUser === null) {
+                console.log('[Dashboard] User logged out or session cleared (expected)');
+            } else {
+                console.error('[Dashboard] ❌ No barbershopId found. Full user:', dashboardUser);
             }
+            setBarbershopId(null);
         }
-
-        console.log('[Dashboard] Final barbershopId:', id);
-        setBarbershopId(id || null);
-    }, [session?.user, isSessionLoading]);
+    }, [dashboardUser?.barbershopId, isDashboardLoading, dashboardUser]);
 
     useEffect(() => {
         if (!barbershopId) return;

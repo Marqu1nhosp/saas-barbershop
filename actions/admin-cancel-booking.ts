@@ -43,9 +43,16 @@ export const adminCancelBooking = actionClient
                 where: { id: userPayload.id },
             });
 
-            if (!adminUser || adminUser.role !== "ADMIN" || adminUser.barbershopId !== barbershopId) {
+            if (!adminUser || adminUser.barbershopId !== barbershopId) {
                 return returnValidationErrors(adminCancelBookingSchema, {
                     _errors: ["Você não tem permissão para cancelar agendamentos nesta barbearia"],
+                });
+            }
+
+            // Verificar se o usuário é ADMIN ou EMPLOYEE
+            if (adminUser.role !== "ADMIN" && adminUser.role !== "EMPLOYEE") {
+                return returnValidationErrors(adminCancelBookingSchema, {
+                    _errors: ["Apenas administradores e funcionários podem cancelar agendamentos"],
                 });
             }
 
