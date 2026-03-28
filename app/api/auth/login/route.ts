@@ -22,6 +22,8 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
         }
 
+        console.log('[api/auth/login] User found:', { id: user.id, email: user.email, role: user.role, barbershopId: user.barbershopId });
+
         // Verificar se o usuário tem senha (não é usuário OAuth)
         if (!user.password) {
             return NextResponse.json({ error: 'Este usuário não tem senha cadastrada. Use autenticação com Google.' }, { status: 400 });
@@ -40,7 +42,7 @@ export async function POST(req: Request) {
             { expiresIn: '1d' }
         );
 
-        return NextResponse.json({
+        const responseData = {
             token,
             user: {
                 id: user.id,
@@ -49,7 +51,11 @@ export async function POST(req: Request) {
                 role: user.role,
                 barbershopId: user.barbershopId,
             }
-        });
+        };
+
+        console.log('[api/auth/login] Returning response:', { user: responseData.user });
+
+        return NextResponse.json(responseData);
     } catch (error) {
         console.error(error);
         return NextResponse.json({ error: 'Erro interno do servidor' }, { status: 500 });

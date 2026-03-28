@@ -16,9 +16,10 @@ import {
     TableRow,
 } from '@/components/ui/table';
 import { getBookings, getClientsForBarbershop, getServicesForBarbershop } from '@/data/dashboard';
-import { authClient } from '@/lib/auth-client';
-import { NewAppointmentDialog } from './_components/new-appointment-dialog';
+import { useDashboardSession } from '@/lib/use-dashboard-session';
+
 import { BookingActionsDialog } from './_components/booking-actions-dialog';
+import { NewAppointmentDialog } from './_components/new-appointment-dialog';
 
 interface BookingData {
     id: string;
@@ -53,39 +54,43 @@ export default function AppointmentsPage() {
     const [services, setServices] = useState<Service[]>([]);
     const [barbershopId, setBarbershopId] = useState<string>('');
     const [isSessionInitialized, setIsSessionInitialized] = useState(false);
-    const { data: session, isPending: isSessionLoading } = authClient.useSession();
+    const { user: dashboardUser, isLoading: isDashboardLoading } = useDashboardSession();
 
-    // Sincronizar barbershopId da sessão com localStorage
+    // Usar barbershopId da sessão do dashboard (JWT)
     useEffect(() => {
-        if (isSessionLoading) {
-            console.log('[Appointments] Session still loading...');
+        if (isDashboardLoading) {
             return;
         }
 
-        let barbId = localStorage.getItem('barbershopId');
-        console.log('[Appointments] Storage barbId:', barbId);
-        
-        // Se não encontrar no localStorage, tenta pegar da sessão do better-auth
-        if (!barbId && session?.user) {
-            barbId = (session.user as any).barbershopId;
-            console.log('[Appointments] Session barbId:', barbId);
-            if (barbId) {
-                localStorage.setItem('barbershopId', barbId);
+        if (dashboardUser?.barbershopId) {
+            setBarbershopId(dashboardUser.barbershopId);
+            localStorage.setItem('barbershopId', dashboardUser.barbershopId);
+            setIsSessionInitialized(true);
+        } else {
+            // Verificar se estamos em uma rota de logout (normal e esperado)
+            const isDashboardRoute = typeof window !== 'undefined' && window.location.pathname.includes('/barbershops/dashboard');
+            if (isDashboardRoute && dashboardUser === null) {
+                // Comportamento esperado
+            } else {
+                // Erro ao buscar barbearia da sessão
             }
+            setBarbershopId('');
+            setIsSessionInitialized(true);
         }
-
-        console.log('[Appointments] Final barbId:', barbId);
-        setBarbershopId(barbId || '');
-        setIsSessionInitialized(true);
-    }, [session?.user, isSessionLoading]);
+    }, [dashboardUser?.barbershopId, isDashboardLoading, dashboardUser]);
 
     // Carregamento de dados quando barbershopId está pronto
     useEffect(() => {
         // Não executar enquanto a sessão está sendo inicializada
         if (!isSessionInitialized || !barbershopId) {
-            console.log('[Appointments] Skipping load:', { isSessionInitialized, barbershopId });
             if (isSessionInitialized && !barbershopId) {
-                console.error('[Appointments] Barbearia não encontrada na sessão do usuário.');
+                // Verificar se é uma logout (redirecionamento esperado)
+                const isDashboardRoute = typeof window !== 'undefined' && window.location.pathname.includes('/barbershops/dashboard');
+                if (isDashboardRoute) {
+                    // Comportamento esperado no logout
+                } else {
+                    // Erro ao buscar barbearia
+                }
                 setLoading(false);
             }
             return;
@@ -93,16 +98,13 @@ export default function AppointmentsPage() {
 
         const initLoad = async () => {
             try {
-                console.log('[Appointments] Initial load with barbId:', barbershopId);
                 const data = await getBookings(barbershopId, undefined);
-                console.log('[Appointments] Initial bookings loaded:', { count: data.length, data });
                 setBookings(data);
                 setFilteredBookings(data);
 
                 // Carregar clientes e serviços para o diálogo
                 await loadClientsAndServices(barbershopId);
             } catch (error) {
-                console.error('[Appointments] Erro ao carregar agendamentos inicialmente:', error);
             } finally {
                 setLoading(false);
             }
@@ -116,13 +118,10 @@ export default function AppointmentsPage() {
         if (selectedDate && barbershopId) {
             const reloadByDate = async () => {
                 try {
-                    console.log('[Appointments] Reloading with date filter:', selectedDate);
                     const data = await getBookings(barbershopId, selectedDate);
-                    console.log('[Appointments] Bookings by date loaded:', { count: data.length, data });
                     setBookings(data);
                     setFilteredBookings(data);
                 } catch (error) {
-                    console.error('[Appointments] Erro ao filtrar por data:', error);
                 }
             };
 
@@ -131,13 +130,10 @@ export default function AppointmentsPage() {
             // Se limpou a data, recarrega todos
             const reloadAll = async () => {
                 try {
-                    console.log('[Appointments] Clearing date filter');
                     const data = await getBookings(barbershopId, undefined);
-                    console.log('[Appointments] All bookings reloaded:', { count: data.length, data });
                     setBookings(data);
                     setFilteredBookings(data);
                 } catch (error) {
-                    console.error('[Appointments] Erro ao recarregar agendamentos:', error);
                 }
             };
 
@@ -155,7 +151,7 @@ export default function AppointmentsPage() {
                 setBookings(data);
                 setFilteredBookings(data);
             } catch (error) {
-                console.error('[Appointments] Erro no polling automático:', error);
+                // Erro no polling automático
             }
         }, 5000);
 
@@ -172,17 +168,15 @@ export default function AppointmentsPage() {
             setClients(clientsData);
             setServices(servicesData);
         } catch (error) {
-            console.error('[Appointments] Erro ao carregar clientes e serviços:', error);
+            // Erro ao carregar clientes e serviços
         }
     };
 
     useEffect(() => {
-        console.log('[Appointments] Filtering with searchTerm:', searchTerm);
         const filtered = bookings.filter((booking) =>
             booking.client.toLowerCase().includes(searchTerm.toLowerCase()) ||
             booking.service.toLowerCase().includes(searchTerm.toLowerCase())
         );
-        console.log('[Appointments] Filtered results:', filtered);
         setFilteredBookings(filtered);
     }, [searchTerm, bookings]);
 

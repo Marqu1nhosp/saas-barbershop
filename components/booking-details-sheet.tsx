@@ -3,10 +3,11 @@
 import { ArrowLeft, MapPin, Phone } from "lucide-react";
 import Image from "next/image";
 import { useAction } from "next-safe-action/hooks";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toast } from "sonner";
 
 import { cancelBooking } from "@/actions/cancel-booking";
+import { updateBookingEmployee } from "@/actions/update-booking-employee";
 import CopyButton from "@/app/barbershops/[id]/_components/copy-button";
 import { BookingSummary } from "@/components/booking-summary";
 import {
@@ -26,6 +27,7 @@ import {
     SheetHeader,
     SheetTitle,
 } from "@/components/ui/sheet";
+import { useGetAvailableEmployees } from "@/hooks/data/useGetAvailableEmployees";
 import { getBookingStatus } from "@/lib/booking-utils";
 
 interface BookingDetailsSheetProps {
@@ -62,10 +64,19 @@ export function BookingDetailsSheet({
     booking,
 }: BookingDetailsSheetProps) {
     const [showCancelDialog, setShowCancelDialog] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
+    const [selectedEmployee, setSelectedEmployee] = useState<string | undefined>(booking.employee?.id);
     const { status, isCancelled } = getBookingStatus(
         booking.date,
         booking.cancelledAt,
     );
+
+    const bookingDate = new Date(booking.date);
+
+    const { data: availableEmployees, isPending: isLoadingEmployees } = useGetAvailableEmployees({
+        barbershopId: booking.barbershop.id,
+        dateTime: bookingDate,
+    });
 
     const { execute: executeCancelBooking, isPending: isCancelling } = useAction(
         cancelBooking,
@@ -87,13 +98,47 @@ export function BookingDetailsSheet({
         },
     );
 
-    const bookingDate = new Date(booking.date);
-    const hours = bookingDate.getHours().toString().padStart(2, "0");
-    const minutes = bookingDate.getMinutes().toString().padStart(2, "0");
+    const { execute: executeUpdateEmployee, isPending: isUpdatingEmployee } = useAction(
+        updateBookingEmployee,
+        {
+            onSuccess() {
+                toast.success("Profissional atualizado com sucesso!");
+                setIsEditing(false);
+            },
+            onError(result) {
+                const message =
+                    result.error?.validationErrors?._errors?.[0] ??
+                    result.error?.serverError ??
+                    (result.error as Error)?.message ??
+                    "Erro ao atualizar profissional.";
+
+                toast.error(message);
+            },
+        },
+    );
+
+    useEffect(() => {
+        if (!open) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
+            setIsEditing(false);
+            setSelectedEmployee(booking.employee?.id);
+        }
+    }, [open, booking.employee?.id]);
+
+    const bookingTime = new Date(booking.date);
+    const hours = bookingTime.getHours().toString().padStart(2, "0");
+    const minutes = bookingTime.getMinutes().toString().padStart(2, "0");
     const time = `${hours}:${minutes}`;
 
     const handleCancelBooking = () => {
         executeCancelBooking({ bookingId: booking.id });
+    };
+
+    const handleUpdateEmployee = () => {
+        executeUpdateEmployee({
+            bookingId: booking.id,
+            employeeId: selectedEmployee || null,
+        });
     };
 
     return (
@@ -177,7 +222,7 @@ export function BookingDetailsSheet({
                             </div>
                         </div>
 
-                        {booking.employee && (
+                        {!isEditing && booking.employee && (
                             <div className="space-y-2">
                                 <h3 className="text-xs font-bold uppercase">
                                     Barbeiro
@@ -204,17 +249,126 @@ export function BookingDetailsSheet({
                                 </div>
                             </div>
                         )}
+
+                        {isEditing && status === "confirmado" && !isCancelled && (
+                            <div className="space-y-2">
+                                <h3 className="text-xs font-bold uppercase">
+                                    Escolher Barbeiro
+                                </h3>
+                                {isLoadingEmployees ? (
+                                    <div className="text-center py-4 text-muted-foreground">
+                                        <p className="text-sm">Carregando barbeiros disponíveis...</p>
+                                    </div>
+                                ) : availableEmployees && (availableEmployees.available?.length > 0 || availableEmployees.unavailable?.length > 0) ? (
+                                    <div className="space-y-3">
+                                        {/* Available Employees */}
+                                        {availableEmployees.available.length > 0 && (
+                                            <div className="space-y-2">
+                                                <p className="text-xs text-muted-foreground">Disponíveis</p>
+                                                <div className="flex flex-col gap-2">
+                                                    {availableEmployees.available.map((employee) => (
+                                                        <Button
+                                                            key={employee.id}
+                                                            variant={selectedEmployee === employee.id ? "default" : "outline"}
+                                                            onClick={() => setSelectedEmployee(employee.id)}
+                                                            className="flex items-center gap-3 h-auto py-2 px-3"
+                                                        >
+                                                            {employee.image && (
+                                                                <div className="relative shrink-0 w-8 h-8 rounded-md bg-muted overflow-hidden">
+                                                                    <Image
+                                                                        src={employee.image}
+                                                                        alt={employee.name}
+                                                                        fill
+                                                                        className="object-cover"
+                                                                        sizes="2rem"
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                            <p className="text-sm font-medium">{employee.name}</p>
+                                                        </Button>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+
+                                        {/* Unavailable Employees */}
+                                        {availableEmployees.unavailable.length > 0 && (
+                                            <div className="space-y-2">
+                                                <p className="text-xs text-muted-foreground">Indisponíveis</p>
+                                                <div className="flex flex-col gap-2">
+                                                    {availableEmployees.unavailable.map((employee) => (
+                                                        <div
+                                                            key={employee.id}
+                                                            className="flex items-center gap-3 h-auto py-2 px-3 rounded-md border border-muted bg-muted/50 opacity-50"
+                                                        >
+                                                            {employee.image && (
+                                                                <div className="relative shrink-0 w-8 h-8 rounded-md bg-muted overflow-hidden">
+                                                                    <Image
+                                                                        src={employee.image}
+                                                                        alt={employee.name}
+                                                                        fill
+                                                                        className="object-cover"
+                                                                        sizes="2rem"
+                                                                    />
+                                                                </div>
+                                                            )}
+                                                            <p className="text-sm font-medium text-muted-foreground">{employee.name}</p>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                ) : (
+                                    <div className="text-center py-4 text-muted-foreground">
+                                        <p className="text-sm">Nenhum barbeiro disponível para este horário</p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
                     </div>
 
                     {status === "confirmado" && !isCancelled && (
-                        <div className="mt-auto">
-                            <Button
-                                variant="destructive"
-                                className="w-full"
-                                onClick={() => setShowCancelDialog(true)}
-                            >
-                                Cancelar Reserva
-                            </Button>
+                        <div className="mt-auto space-y-3">
+                            {isEditing ? (
+                                <>
+                                    <Button
+                                        className="w-full"
+                                        onClick={handleUpdateEmployee}
+                                        disabled={isUpdatingEmployee}
+                                    >
+                                        {isUpdatingEmployee ? "Atualizando..." : "Confirmar Profissional"}
+                                    </Button>
+                                    <Button
+                                        variant="outline"
+                                        className="w-full"
+                                        onClick={() => {
+                                            setIsEditing(false);
+                                            setSelectedEmployee(booking.employee?.id);
+                                        }}
+                                        disabled={isUpdatingEmployee}
+                                    >
+                                        Cancelar
+                                    </Button>
+                                </>
+                            ) : (
+                                <>
+                                    <Button
+                                        variant="secondary"
+                                        className="w-full"
+                                        onClick={() => setIsEditing(true)}
+                                    >
+                                        Editar Profissional
+                                    </Button>
+                                    <Button
+                                        variant="destructive"
+                                        className="w-full"
+                                        onClick={() => setShowCancelDialog(true)}
+                                    >
+                                        Cancelar Reserva
+                                    </Button>
+                                </>
+                            )}
                         </div>
                     )}
                 </SheetContent>

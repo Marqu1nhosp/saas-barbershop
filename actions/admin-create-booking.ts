@@ -46,9 +46,16 @@ export const adminCreateBooking = actionClient
                 where: { id: userPayload.id },
             });
 
-            if (!adminUser || adminUser.role !== "ADMIN" || adminUser.barbershopId !== barbershopId) {
+            if (!adminUser || adminUser.barbershopId !== barbershopId) {
                 return returnValidationErrors(adminCreateBookingSchema, {
                     _errors: ["Você não tem permissão para criar agendamentos nesta barbearia"],
+                });
+            }
+
+            // Verificar se o usuário é ADMIN ou EMPLOYEE
+            if (adminUser.role !== "ADMIN" && adminUser.role !== "EMPLOYEE") {
+                return returnValidationErrors(adminCreateBookingSchema, {
+                    _errors: ["Apenas administradores e funcionários podem criar agendamentos"],
                 });
             }
 

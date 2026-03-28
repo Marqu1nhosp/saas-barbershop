@@ -53,7 +53,6 @@ export const cancelBooking = protectedActionClient
                     reason: 'requested_by_customer',
                 });
             } catch (error) {
-                console.log(error);
                 return returnValidationErrors(inputSchema, {
                     _errors: ["Não foi possível processar o reembolso pelo Stripe"],
                 });

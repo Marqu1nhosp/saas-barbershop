@@ -22,8 +22,6 @@ export const getAvailableEmployees = protectedActionClient
     .inputSchema(getAvailableEmployeesSchema)
     .action(async ({ parsedInput: { barbershopId, dateTime } }) => {
         try {
-            console.log("DEBUG: getAvailableEmployees called with:", { barbershopId, dateTime });
-            
             // Buscar todos os employees da barbearia
             const employees = await prisma.user.findMany({
                 where: {
@@ -40,8 +38,6 @@ export const getAvailableEmployees = protectedActionClient
                     name: "asc",
                 },
             });
-
-            console.log("DEBUG: Found employees:", employees.length, employees);
 
             if (employees.length === 0) {
                 return {
@@ -68,18 +64,12 @@ export const getAvailableEmployees = protectedActionClient
                 })
             );
 
-            console.log("DEBUG: employeeAvailability:", employeeAvailability);
 
             return {
                 available: employeeAvailability.filter((e) => e.isAvailable),
                 unavailable: employeeAvailability.filter((e) => !e.isAvailable),
             };
         } catch (error) {
-            console.error("Erro ao buscar barbeiros disponíveis:", error);
-            if (error instanceof Error) {
-                console.error("Error message:", error.message);
-                console.error("Error stack:", error.stack);
-            }
             throw new Error(`Erro ao buscar barbeiros disponíveis: ${error instanceof Error ? error.message : String(error)}`);
         }
     });
