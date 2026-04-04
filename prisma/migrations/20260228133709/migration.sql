@@ -1,5 +1,5 @@
 -- CreateEnum
-CREATE TYPE "Role" AS ENUM ('ADMIN', 'EMPLOYEE');
+CREATE TYPE "Role" AS ENUM ('ADMIN', 'EMPLOYEE', 'CLIENT');
 
 -- CreateTable
 CREATE TABLE "Barbershop" (
@@ -49,7 +49,7 @@ CREATE TABLE "user" (
     "password" TEXT,
     "emailVerified" BOOLEAN NOT NULL DEFAULT false,
     "image" TEXT,
-    "role" "Role" NOT NULL DEFAULT 'EMPLOYEE',
+    "role" "Role" NOT NULL DEFAULT 'CLIENT',
     "barbershopId" TEXT,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -108,6 +108,7 @@ CREATE TABLE "booking" (
     "userId" TEXT NOT NULL,
     "barbershopId" TEXT NOT NULL,
     "serviceId" TEXT NOT NULL,
+    "employeeId" TEXT,
     "date" TIMESTAMPTZ NOT NULL,
     "cancelledAt" TIMESTAMPTZ,
     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -146,6 +147,9 @@ CREATE INDEX "booking_barbershopId_idx" ON "booking"("barbershopId");
 -- CreateIndex
 CREATE INDEX "booking_serviceId_idx" ON "booking"("serviceId");
 
+-- CreateIndex
+CREATE INDEX "booking_employeeId_idx" ON "booking"("employeeId");
+
 -- AddForeignKey
 ALTER TABLE "BarbershopService" ADD CONSTRAINT "BarbershopService_barbershopId_fkey" FOREIGN KEY ("barbershopId") REFERENCES "Barbershop"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
@@ -163,6 +167,9 @@ ALTER TABLE "booking" ADD CONSTRAINT "booking_userId_fkey" FOREIGN KEY ("userId"
 
 -- AddForeignKey
 ALTER TABLE "booking" ADD CONSTRAINT "booking_barbershopId_fkey" FOREIGN KEY ("barbershopId") REFERENCES "Barbershop"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "booking" ADD CONSTRAINT "booking_employeeId_fkey" FOREIGN KEY ("employeeId") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "booking" ADD CONSTRAINT "booking_serviceId_fkey" FOREIGN KEY ("serviceId") REFERENCES "BarbershopService"("id") ON DELETE CASCADE ON UPDATE CASCADE;
