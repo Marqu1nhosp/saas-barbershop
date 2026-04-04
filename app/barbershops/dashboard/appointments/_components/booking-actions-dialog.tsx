@@ -1,7 +1,7 @@
 'use client';
 
-import { useAction } from 'next-safe-action/hooks';
 import Image from 'next/image';
+import { useAction } from 'next-safe-action/hooks';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 
@@ -130,7 +130,7 @@ export function BookingActionsDialog({
                 });
 
                 // Handle both direct result and object with data property
-                let employees = { available: [], unavailable: [] };
+                let employees: { available: any[], unavailable: any[] } = { available: [], unavailable: [] };
                 if (result && typeof result === 'object' && 'available' in result) {
                     employees = result as { available: any[], unavailable: any[] };
                 } else if (result && typeof result === 'object' && 'data' in result && result.data) {
