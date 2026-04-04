@@ -69,5 +69,8 @@ export const createBookingCheckoutSession = protectedActionClient
             ],
         });
 
-        return checkoutSession;
+        return {
+            id: checkoutSession.id,
+            url: checkoutSession.url,
+        };
     });

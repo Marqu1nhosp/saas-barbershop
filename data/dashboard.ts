@@ -317,6 +317,7 @@ export async function getBookings(barbershopId: string, date?: string): Promise<
             date: booking.date.toISOString().split('T')[0],
             time,
             status: booking.cancelledAt ? 'cancelado' : 'confirmado',
+            cancelledAt: booking.cancelledAt?.toISOString() || null,
         };
     });
 }

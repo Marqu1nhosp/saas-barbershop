@@ -38,6 +38,7 @@ interface BookingActionsDialogProps {
     serviceName: string;
     currentDate: string;
     currentTime: string;
+    cancelledAt?: string | null;
     onSuccess?: () => void;
 }
 
@@ -48,6 +49,7 @@ export function BookingActionsDialog({
     serviceName,
     currentDate,
     currentTime,
+    cancelledAt,
     onSuccess,
 }: BookingActionsDialogProps) {
     const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
@@ -455,11 +457,10 @@ export function BookingActionsDialog({
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsEditDialogOpen(true)}
-                    disabled={isDatePassed}
-                    title={isDatePassed ? 'Não é possível editar agendamentos passados' : ''}
+                    onClick={() => setIsEd || !!cancelledAt}
+                    title={cancelledAt ? 'Não é possível editar agendamentos cancelados' : isDatePassed ? 'Não é possível editar agendamentos passados' : ''}
                     className={`border-slate-300 text-slate-700 ${
-                        isDatePassed 
+                        (isDatePassed || cancelledAt) 
                             ? 'opacity-50 cursor-not-allowed' 
                             : 'hover:bg-slate-100'
                     }`}
@@ -470,9 +471,10 @@ export function BookingActionsDialog({
                     variant="destructive"
                     size="sm"
                     onClick={() => setIsCancelDialogOpen(true)}
-                    disabled={isDatePassed}
-                    title={isDatePassed ? 'Não é possível cancelar agendamentos passados' : ''}
+                    disabled={isDatePassed || !!cancelledAt}
+                    title={cancelledAt ? 'Este agendamento já foi cancelado' : isDatePassed ? 'Não é possível cancelar agendamentos passados' : ''}
                     className={`bg-red-50 text-red-600 border border-red-200 ${
+                        (isDatePassed || cancelledAt)ed-50 text-red-600 border border-red-200 ${
                         isDatePassed 
                             ? 'opacity-50 cursor-not-allowed' 
                             : 'hover:bg-red-100'

@@ -29,6 +29,7 @@ interface BookingData {
     date: string;
     time: string;
     status: string;
+    cancelledAt?: string | null;
 }
 
 interface Client {
@@ -297,6 +298,7 @@ export default function AppointmentsPage() {
                                                 serviceName={booking.service}
                                                 currentDate={format(parseISO(booking.date), "dd/MM/yyyy")}
                                                 currentTime={booking.time}
+                                                cancelledAt={booking.cancelledAt}
                                                 onSuccess={() => {
                                                     setSelectedDate('');
                                                     setSearchTerm('');
@@ -353,6 +355,7 @@ export default function AppointmentsPage() {
                                         serviceName={booking.service}
                                         currentDate={format(parseISO(booking.date), "dd/MM/yyyy")}
                                         currentTime={booking.time}
+                                        cancelledAt={booking.cancelledAt}
                                         onSuccess={() => {
                                             setSelectedDate('');
                                             setSearchTerm('');
