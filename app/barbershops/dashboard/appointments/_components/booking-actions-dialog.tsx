@@ -457,7 +457,8 @@ export function BookingActionsDialog({
                 <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setIsEd || !!cancelledAt}
+                    onClick={() => setIsEditDialogOpen(true)}
+                    disabled={isDatePassed || !!cancelledAt}
                     title={cancelledAt ? 'Não é possível editar agendamentos cancelados' : isDatePassed ? 'Não é possível editar agendamentos passados' : ''}
                     className={`border-slate-300 text-slate-700 ${
                         (isDatePassed || cancelledAt) 
@@ -474,8 +475,7 @@ export function BookingActionsDialog({
                     disabled={isDatePassed || !!cancelledAt}
                     title={cancelledAt ? 'Este agendamento já foi cancelado' : isDatePassed ? 'Não é possível cancelar agendamentos passados' : ''}
                     className={`bg-red-50 text-red-600 border border-red-200 ${
-                        (isDatePassed || cancelledAt)ed-50 text-red-600 border border-red-200 ${
-                        isDatePassed 
+                        (isDatePassed || cancelledAt) 
                             ? 'opacity-50 cursor-not-allowed' 
                             : 'hover:bg-red-100'
                     }`}
