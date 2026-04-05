@@ -91,7 +91,7 @@ export const POST = async (req: Request) => {
             } catch (error) {
                 console.error("❌ Erro ao processar checkout:", error instanceof Error ? error.message : error);
                 if (error instanceof z.ZodError) {
-                    console.error("   Erro de validação Zod:", error.errors);
+                    console.error("   Erro de validação Zod:", error.issues);
                 }
                 throw error;
             }
