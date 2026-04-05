@@ -90,9 +90,6 @@ export const POST = async (req: Request) => {
                 console.log("✅ Booking criado com sucesso:", booking.id);
             } catch (error) {
                 console.error("❌ Erro ao processar checkout:", error instanceof Error ? error.message : error);
-                if (error instanceof z.ZodError) {
-                    console.error("   Erro de validação Zod:", error.issues);
-                }
                 throw error;
             }
         } else {
