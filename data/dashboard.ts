@@ -304,17 +304,19 @@ export async function getBookings(barbershopId: string, date?: string): Promise<
     });
 
     return sortedBookings.map((booking) => {
-        // Formatar hora manualmente para evitar problemas de timezone
-        const hours = booking.date.getUTCHours().toString().padStart(2, '0');
-        const minutes = booking.date.getUTCMinutes().toString().padStart(2, '0');
+        // Exibir no horário local do ambiente para manter consistência
+        // com os horários escolhidos no dashboard (inputs locais).
+        const hours = booking.date.getHours().toString().padStart(2, '0');
+        const minutes = booking.date.getMinutes().toString().padStart(2, '0');
         const time = `${hours}:${minutes}`;
+        const localDate = `${booking.date.getFullYear()}-${String(booking.date.getMonth() + 1).padStart(2, '0')}-${String(booking.date.getDate()).padStart(2, '0')}`;
 
         return {
             id: booking.id,
             client: booking.user?.name || 'Desconhecido',
             service: booking.service?.name || 'Serviço desconhecido',
             professional: booking.employee?.name || 'Não atribuído',
-            date: booking.date.toISOString().split('T')[0],
+            date: localDate,
             time,
             status: booking.cancelledAt ? 'cancelado' : 'confirmado',
             cancelledAt: booking.cancelledAt?.toISOString() || null,
