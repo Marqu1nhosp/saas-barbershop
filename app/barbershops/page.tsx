@@ -5,7 +5,7 @@ import {
     PageSectionContent,
     PageSectionTitle,
 } from "@/components/ui/page";
-import { getBarbershopsByServiceName } from "@/data/barbershops";
+import { searchBarbershops } from "@/data/barbershops";
 
 interface BarbershopsPageProps {
     searchParams?:
@@ -18,7 +18,7 @@ const BarbershopsPage = async ({ searchParams }: BarbershopsPageProps) => {
     const rawSearch = resolvedSearchParams?.search;
     const search = Array.isArray(rawSearch) ? rawSearch[0] : rawSearch;
 
-    const barbershops = search ? await getBarbershopsByServiceName(search) : [];
+    const barbershops = await searchBarbershops(search);
 
     return (
         <div>

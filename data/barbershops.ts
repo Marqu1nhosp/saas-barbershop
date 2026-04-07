@@ -37,18 +37,43 @@ export async function getPopularBarbershops() {
     }
 }
 
-export const getBarbershopsByServiceName = async (serviceName: string) => {
-    const barbershops = await prisma.barbershop.findMany({
-        where: {
-            services: {
-                some: {
-                    name: {
-                        contains: serviceName,
-                        mode: "insensitive",
-                    },
-                },
-            },
-        },
+export async function searchBarbershops(search?: string) {
+  if (!search) {
+    return prisma.barbershop.findMany({
+      include: { services: true },
     });
-    return barbershops;
-};
+  }
+
+  return prisma.barbershop.findMany({
+    where: {
+      OR: [
+        {
+          name: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+        {
+          address: {
+            contains: search,
+            mode: "insensitive",
+          },
+        },
+
+        {
+          services: {
+            some: {
+              name: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+          },
+        },
+      ],
+    },
+    include: {
+      services: true,
+    },
+  });
+}
