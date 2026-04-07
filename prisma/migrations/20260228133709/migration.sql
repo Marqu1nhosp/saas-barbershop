@@ -9,6 +9,7 @@ CREATE TABLE "Barbershop" (
     "description" TEXT NOT NULL,
     "imageUrl" TEXT NOT NULL,
     "phones" TEXT[],
+    "cancellationNoticeHours" INTEGER NOT NULL DEFAULT 2,
 
     CONSTRAINT "Barbershop_pkey" PRIMARY KEY ("id")
 );

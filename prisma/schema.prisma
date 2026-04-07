@@ -20,6 +20,7 @@ model Barbershop {
   description String
   imageUrl    String
   phones      String[]
+  cancellationNoticeHours Int @default(2)
 
   services      BarbershopService[]
   bookings      Booking[]

@@ -6,6 +6,7 @@ import Stripe from "stripe";
 import { z } from "zod";
 
 import { protectedActionClient } from "@/lib/action-client";
+import { canCancelByPolicy, getCancellationPolicyMessage } from "@/lib/cancellation-policy";
 import prisma from "@/lib/prisma";
 
 const inputSchema = z.object({
@@ -17,6 +18,13 @@ export const cancelBooking = protectedActionClient
     .action(async ({ parsedInput: { bookingId }, ctx: { user } }) => {
         const booking = await prisma.booking.findUnique({
             where: { id: bookingId },
+            include: {
+                barbershop: {
+                    select: {
+                        cancellationNoticeHours: true,
+                    },
+                },
+            },
         });
 
         if (!booking) {
@@ -34,6 +42,13 @@ export const cancelBooking = protectedActionClient
         if (booking.cancelledAt) {
             return returnValidationErrors(inputSchema, {
                 _errors: ["Este agendamento já foi cancelado"],
+            });
+        }
+
+        const cancellationNoticeHours = booking.barbershop.cancellationNoticeHours ?? 2;
+        if (!canCancelByPolicy(booking.date, cancellationNoticeHours)) {
+            return returnValidationErrors(inputSchema, {
+                _errors: [getCancellationPolicyMessage(cancellationNoticeHours)],
             });
         }
 

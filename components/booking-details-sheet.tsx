@@ -28,6 +28,7 @@ import {
     SheetTitle,
 } from "@/components/ui/sheet";
 import { useGetAvailableEmployees } from "@/hooks/data/useGetAvailableEmployees";
+import { canCancelByPolicy, getCancellationPolicyMessage } from "@/lib/cancellation-policy";
 import { getBookingStatus } from "@/lib/booking-utils";
 
 interface BookingDetailsSheetProps {
@@ -49,6 +50,7 @@ interface BookingDetailsSheetProps {
             address: string;
             imageUrl: string;
             phones: string[];
+            cancellationNoticeHours?: number;
         };
         employee?: {
             id: string;
@@ -72,6 +74,9 @@ export function BookingDetailsSheet({
     );
 
     const bookingDate = new Date(booking.date);
+    const cancellationNoticeHours = booking.barbershop.cancellationNoticeHours ?? 2;
+    const canCancelNow = canCancelByPolicy(booking.date, cancellationNoticeHours);
+    const cancellationPolicyMessage = getCancellationPolicyMessage(cancellationNoticeHours);
 
     const { data: availableEmployees, isPending: isLoadingEmployees } = useGetAvailableEmployees({
         barbershopId: booking.barbershop.id,
@@ -330,6 +335,11 @@ export function BookingDetailsSheet({
 
                     {status === "confirmado" && !isCancelled && (
                         <div className="mt-auto space-y-3">
+                            {!canCancelNow && (
+                                <p className="text-xs text-muted-foreground">
+                                    {cancellationPolicyMessage}
+                                </p>
+                            )}
                             {isEditing ? (
                                 <>
                                     <Button
@@ -364,6 +374,7 @@ export function BookingDetailsSheet({
                                         variant="destructive"
                                         className="w-full"
                                         onClick={() => setShowCancelDialog(true)}
+                                        disabled={!canCancelNow}
                                     >
                                         Cancelar Reserva
                                     </Button>

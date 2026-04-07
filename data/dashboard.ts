@@ -440,6 +440,20 @@ export async function updateBarbershop(barbershopId: string, name: string, addre
 
 }
 
+export async function updateBarbershopCancellationPolicy(
+    barbershopId: string,
+    cancellationNoticeHours: number,
+) {
+    const updatedBarbershop = await prisma.barbershop.update({
+        where: { id: barbershopId },
+        data: {
+            cancellationNoticeHours,
+        },
+    });
+
+    return updatedBarbershop;
+}
+
 export interface BusinessHour {
     id: string;
     barbershopId: string;

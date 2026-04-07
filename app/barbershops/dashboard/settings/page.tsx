@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { getBarbershop, updateBarbershop } from '@/data/dashboard';
+import { getBarbershop, updateBarbershop, updateBarbershopCancellationPolicy } from '@/data/dashboard';
 
 import { BusinessHoursForm } from './_components/business-hours-form';
 
@@ -32,10 +32,13 @@ interface BarbershopResponseDTO {
     description: string;
     imageUrl: string;
     phones: string[];
+    cancellationNoticeHours?: number;
 }
 
 export default function SettingsPage() {
     const [loading, setLoading] = useState(true);
+    const [cancellationHours, setCancellationHours] = useState(2);
+    const [isSavingCancellation, setIsSavingCancellation] = useState(false);
 
     const {
         register,
@@ -74,6 +77,7 @@ export default function SettingsPage() {
                     phone: data.phones?.[0] ?? '',
                     description: data.description ?? '',
                 });
+                setCancellationHours(data.cancellationNoticeHours ?? 2);
             } catch {
                 toast.error('Erro ao carregar dados da barbearia');
             } finally {
@@ -102,6 +106,26 @@ export default function SettingsPage() {
             toast.success('Informações da barbearia atualizadas!');
         } catch {
             toast.error('Erro ao atualizar barbearia');
+        }
+    };
+
+    const onSaveCancellationPolicy = async () => {
+        const barbershopId = localStorage.getItem('barbershopId');
+        if (!barbershopId) return;
+
+        if (!Number.isInteger(cancellationHours) || cancellationHours < 0) {
+            toast.error('Informe um numero de horas valido (0 ou maior).');
+            return;
+        }
+
+        try {
+            setIsSavingCancellation(true);
+            await updateBarbershopCancellationPolicy(barbershopId, cancellationHours);
+            toast.success('Politica de cancelamento atualizada!');
+        } catch {
+            toast.error('Erro ao atualizar politica de cancelamento');
+        } finally {
+            setIsSavingCancellation(false);
         }
     };
 
@@ -242,9 +266,34 @@ export default function SettingsPage() {
                             <CardTitle>Política de Cancelamento</CardTitle>
                         </CardHeader>
                         <CardContent className="pt-6">
-                            <p className="text-sm text-slate-500 font-medium">
-                                Em breve…
-                            </p>
+                            <div className="space-y-4">
+                                <div>
+                                    <Label className="text-slate-700 font-semibold mb-2 block">
+                                        Antecedencia minima para cancelamento (em horas)
+                                    </Label>
+                                    <Input
+                                        type="number"
+                                        min={0}
+                                        step={1}
+                                        value={cancellationHours}
+                                        onChange={(event) => setCancellationHours(Number(event.target.value))}
+                                        className="h-11 rounded-lg border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 max-w-xs"
+                                    />
+                                    <p className="text-xs text-slate-500 mt-2">
+                                        Essa regra vale para cancelamento feito pelo cliente no app.
+                                        Equipe interna (ADMIN/EMPLOYEE) continua podendo cancelar no dashboard.
+                                    </p>
+                                </div>
+
+                                <Button
+                                    type="button"
+                                    onClick={onSaveCancellationPolicy}
+                                    disabled={isSavingCancellation}
+                                    className="bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white font-semibold rounded-lg shadow-md hover:shadow-lg transition-all h-11 px-8"
+                                >
+                                    {isSavingCancellation ? 'Salvando...' : 'Salvar politica'}
+                                </Button>
+                            </div>
                         </CardContent>
                     </Card>
                 </TabsContent>

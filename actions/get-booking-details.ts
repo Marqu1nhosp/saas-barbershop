@@ -31,6 +31,7 @@ export const getBookingDetails = protectedActionClient
                         address: true,
                         imageUrl: true,
                         phones: true,
+                        cancellationNoticeHours: true,
                     },
                 },
                 employee: {
