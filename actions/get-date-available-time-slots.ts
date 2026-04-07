@@ -1,8 +1,8 @@
 "use server"
 import { z } from "zod";
 
-import { actionClient } from "@/lib/action-client";
 import { getBusinessHours } from "@/data/dashboard";
+import { actionClient } from "@/lib/action-client";
 import prisma from "@/lib/prisma";
 
 const inputSchema = z.object({
@@ -144,7 +144,7 @@ export const getDateAvailableTimeSlots = actionClient
         const isToday = selectedDateYmd === todayYmd;
 
         // Filter time slots based on business hours
-        let availableTimeSlots = TIME_SLOTS.filter(timeSlot => {
+        const availableTimeSlots = TIME_SLOTS.filter(timeSlot => {
             // Check if slot is within business hours
             if (compareTime(timeSlot, dayHours.openingTime!) < 0) {
                 return false;

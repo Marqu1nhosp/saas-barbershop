@@ -8,13 +8,16 @@ import {
 import { getBarbershopsByServiceName } from "@/data/barbershops";
 
 interface BarbershopsPageProps {
-    searchParams: {
-        search?: string;
-    };
+    searchParams?:
+        | { search?: string | string[] }
+        | Promise<{ search?: string | string[] }>;
 }
 
 const BarbershopsPage = async ({ searchParams }: BarbershopsPageProps) => {
-    const { search } = searchParams;
+    const resolvedSearchParams = searchParams ? await Promise.resolve(searchParams) : undefined;
+    const rawSearch = resolvedSearchParams?.search;
+    const search = Array.isArray(rawSearch) ? rawSearch[0] : rawSearch;
+
     const barbershops = search ? await getBarbershopsByServiceName(search) : [];
 
     return (

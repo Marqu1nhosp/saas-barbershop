@@ -10,6 +10,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
 import { Button } from "./ui/button";
 import {
     Sheet,
+    SheetClose,
     SheetContent,
     SheetFooter,
     SheetHeader,
@@ -135,42 +136,36 @@ export function MenuSheet() {
 
                     {/* Categories */}
                     <div className="flex flex-col gap-4">
-                        <Link
-                            href="/barbershops?search=cabelo"
-                            className="text-base"
-                        >
-                            Cabelo
-                        </Link>
-                        <Link
-                            href="/barbershops?search=barba"
-                            className="text-base"
-                        >
-                            Barba
-                        </Link>
-                        <Link
-                            href="/barbershops?search=acabamento"
-                            className="text-base"
-                        >
-                            Acabamento
-                        </Link>
-                        <Link
-                            href="/barbershops?search=sobrancelha"
-                            className="text-base"
-                        >
-                            Sobrancelha
-                        </Link>
-                        <Link
-                            href="/barbershops?search=massagem"
-                            className="text-base"
-                        >
-                            Massagem
-                        </Link>
-                        <Link
-                            href="/barbershops?search=hidratacao"
-                            className="text-base"
-                        >
-                            Hidratação
-                        </Link>
+                        <SheetClose asChild>
+                            <Link href="/barbershops?search=cabelo" className="text-base">
+                                Cabelo
+                            </Link>
+                        </SheetClose>
+                        <SheetClose asChild>
+                            <Link href="/barbershops?search=barba" className="text-base">
+                                Barba
+                            </Link>
+                        </SheetClose>
+                        <SheetClose asChild>
+                            <Link href="/barbershops?search=acabamento" className="text-base">
+                                Acabamento
+                            </Link>
+                        </SheetClose>
+                        <SheetClose asChild>
+                            <Link href="/barbershops?search=sobrancelha" className="text-base">
+                                Sobrancelha
+                            </Link>
+                        </SheetClose>
+                        <SheetClose asChild>
+                            <Link href="/barbershops?search=massagem" className="text-base">
+                                Massagem
+                            </Link>
+                        </SheetClose>
+                        <SheetClose asChild>
+                            <Link href="/barbershops?search=hidratacao" className="text-base">
+                                Hidratação
+                            </Link>
+                        </SheetClose>
                     </div>
 
                     <div className="border-t border-border" />
