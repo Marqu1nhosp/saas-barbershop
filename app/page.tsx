@@ -25,7 +25,7 @@ export default async function Home() {
       <Header />
       <PageContainer>
         <QuickSearch />
-        <Image src={banner} alt="Agende nos melhores com a Aparatus" sizes="100vw" className="h-auto w-full" />
+        <Image src={banner} alt="Agende nos melhores com a Barbershop" sizes="100vw" className="h-auto w-full rounded-3xl" />
 
         {confirmedBookings.length > 0 && (
           <PageSectionContent>

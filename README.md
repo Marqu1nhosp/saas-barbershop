@@ -1,8 +1,8 @@
-# Aparatus: Plataforma SaaS de Agendamento para Barbearias
+# Barbershop: Plataforma SaaS de Agendamento para Barbearias
 
 ## Resumo Executivo
 
-**Aparatus** é uma plataforma Software as a Service (SaaS) completa para gerenciamento de agendamentos em barbearias. O sistema permite que proprietários e gestores de estabelecimentos configurem horários de funcionamento, gerenciem serviços oferecidos, consultem métricas de receita e desempenho através de um dashboard intuitivo, enquanto oferece aos clientes uma interface moderna para visualizar barbearias, consultar serviços disponíveis e realizar agendamentos online com pagamento integrado via Stripe.
+**Barbershop** é uma plataforma Software as a Service (SaaS) completa para gerenciamento de agendamentos em barbearias. O sistema permite que proprietários e gestores de estabelecimentos configurem horários de funcionamento, gerenciem serviços oferecidos, consultem métricas de receita e desempenho através de um dashboard intuitivo, enquanto oferece aos clientes uma interface moderna para visualizar barbearias, consultar serviços disponíveis e realizar agendamentos online com pagamento integrado via Stripe.
 
 A plataforma foi desenvolvida com foco em escalabilidade, segurança de dados e experiência do usuário, utilizando tecnologias modernas em desenvolvimento web.
 
@@ -379,7 +379,7 @@ BarbershopService ──→ Barbershop
 1. **Clonar Repositório**:
    ```bash
    git clone <repository-url>
-   cd aparatus
+   cd Barbershop
    ```
 
 2. **Instalar Dependências**:
@@ -398,7 +398,7 @@ Criar arquivo `.env.local` na raiz do projeto:
 
 ```env
 # Database
-DATABASE_URL=postgresql://usuario:senha@localhost:5432/aparatus
+DATABASE_URL=postgresql://usuario:senha@localhost:5432/Barbershop
 
 # Better-Auth
 BETTER_AUTH_SECRET=seu_secret_aleatorio_de_32_caracteres
