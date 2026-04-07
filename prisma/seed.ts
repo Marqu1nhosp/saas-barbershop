@@ -82,30 +82,34 @@ async function seedDatabase() {
         ];
         // Nomes criativos para as barbearias
         const creativeNames = [
-            "Barbearia Vintage",
-            "Corte & Estilo",
-            "Barba & Navalha",
-            "The Dapper Den",
-            "Cabelo & Cia.",
-            "Machado & Tesoura",
-            "Barbearia Elegance",
-            "Aparência Impecável",
-            "Estilo Urbano",
-            "Estilo Clássico",
+            "Salão modelo - Mauricio",
+            "Corte e Estilo Barbearia",
+            "Barbearia Executive",
+            "Brooklin Barbearia",
+            "NP Barbearia",
+            "Studio D Barber Shop",
+            "Barbearia Novo Visual",
+            "Men's Club Barbearia",
+            "Império Black Barbearia",
+            "Los Manos Barbearia",
+            "Barbearia Mulungu",
+            "Barbearia Conquista Style",
         ];
 
-        // Endereços fictícios para as barbearias
+        
         const addresses = [
-            "Rua da Barbearia, 123",
-            "Avenida dos Cortes, 456",
-            "Praça da Barba, 789",
-            "Travessa da Navalha, 101",
-            "Alameda dos Estilos, 202",
-            "Estrada do Machado, 303",
-            "Avenida Elegante, 404",
-            "Praça da Aparência, 505",
-            "Rua Urbana, 606",
-            "Avenida Clássica, 707",
+            "Av. da Urbis V",
+            "Av Frei Benjamim, 1722 - Brasil",
+            "Av. Frei Benjamim, 2789 - Brasil",
+            "Via Local H, 7 - Zabelê",
+            "Rua Coronel Maneca Santos, 127 - Lagoa das Flores",
+            "Av. Lapa, 2183 - Brasil",
+            "Rua Manoel Beckman, 70 - Boa Vista",
+            "Rua Pedro Bittencourt Ferraz, 305 - Felícia",
+            "Av. Frei Benjamim, 1722 - Brasil",
+            "Av. Frei Benjamim, 1840 - Brasil",
+            "Av. Macaúbas, 2547 - Brasil",
+            "Av. Olívia Flores, 900 - Candeias",
         ];
 
         const services = [
@@ -173,26 +177,26 @@ async function seedDatabase() {
 
             // Criar usuário específico para a Barbearia Vintage (primeira barbearia)
             if (i === 0) {
-                const vintagePassword = await bcrypt.hash("vintage123", 10);
+                const modeloPassword = await bcrypt.hash("modelo123", 10);
                 await prisma.user.upsert({
-                    where: { email: "owner@barbeariavintage.com" },
+                    where: { email: "owner@salaomodelo.com" },
                     update: {
-                        password: vintagePassword,
+                        password: modeloPassword,
                         role: "ADMIN",
                         barbershopId: barbershop.id,
                     },
                     create: {
                         id: "vintage-owner-1",
-                        name: "Dono Barbearia Vintage",
-                        email: "owner@barbeariavintage.com",
-                        password: vintagePassword,
+                        name: "Dono Salão modelo",
+                        email: "owner@salaomodelo.com",
+                        password: modeloPassword,
                         role: "ADMIN",
                         barbershopId: barbershop.id,
                     },
                 });
-                console.log("Usuário Barbearia Vintage criado:");
-                console.log("Email: owner@barbeariavintage.com");
-                console.log("Senha: vintage123");
+                console.log("Usuário Salão modelo criado:");
+                console.log("Email: owner@salaomodelo.com");
+                console.log("Senha: modelo123");
             }
 
             if (i === 1) {
