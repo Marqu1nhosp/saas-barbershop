@@ -11,6 +11,32 @@ import {
 
 import { prisma } from '@/lib/prisma';
 
+const SAO_PAULO_TIME_ZONE = 'America/Sao_Paulo';
+
+function formatTimeInSaoPaulo(date: Date): string {
+    return new Intl.DateTimeFormat('pt-BR', {
+        timeZone: SAO_PAULO_TIME_ZONE,
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false,
+    }).format(date);
+}
+
+function formatDateInSaoPaulo(date: Date): string {
+    const parts = new Intl.DateTimeFormat('en-CA', {
+        timeZone: SAO_PAULO_TIME_ZONE,
+        year: 'numeric',
+        month: '2-digit',
+        day: '2-digit',
+    }).formatToParts(date);
+
+    const year = parts.find((part) => part.type === 'year')?.value ?? '0000';
+    const month = parts.find((part) => part.type === 'month')?.value ?? '01';
+    const day = parts.find((part) => part.type === 'day')?.value ?? '01';
+
+    return `${year}-${month}-${day}`;
+}
+
 export interface DashboardMetrics {
     bookingsToday: number;
     bookingsMonth: number;
@@ -243,7 +269,8 @@ export async function getMostPopularServices(barbershopId: string): Promise<Popu
 
 export async function getBookings(barbershopId: string, date?: string): Promise<BookingData[]> {
     const now = new Date();
-    const today = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), 0, 0, 0, 0));
+    const todayInSaoPaulo = formatDateInSaoPaulo(now);
+    const today = new Date(`${todayInSaoPaulo}T00:00:00-03:00`);
 
     const where: { 
         barbershopId: string; 
@@ -254,13 +281,9 @@ export async function getBookings(barbershopId: string, date?: string): Promise<
 
     if (date && date.trim() !== '') {
         try {
-            // Parse a data como string YYYY-MM-DD e crie o intervalo em UTC
-            const [year, month, day] = date.split('-').map(Number);
-
-            // Inicio do dia em UTC (00:00:00)
-            const startOfDate = new Date(Date.UTC(year, month - 1, day, 0, 0, 0, 0));
-            // Fim do dia em UTC (23:59:59.999)
-            const endOfDate = new Date(Date.UTC(year, month - 1, day, 23, 59, 59, 999));
+            // Interpreta o filtro como dia local de Sao Paulo e converte para UTC.
+            const startOfDate = new Date(`${date}T00:00:00-03:00`);
+            const endOfDate = new Date(`${date}T23:59:59.999-03:00`);
 
             where.date = {
                 gte: startOfDate,
@@ -304,12 +327,8 @@ export async function getBookings(barbershopId: string, date?: string): Promise<
     });
 
     return sortedBookings.map((booking) => {
-        // Exibir no horário local do ambiente para manter consistência
-        // com os horários escolhidos no dashboard (inputs locais).
-        const hours = booking.date.getHours().toString().padStart(2, '0');
-        const minutes = booking.date.getMinutes().toString().padStart(2, '0');
-        const time = `${hours}:${minutes}`;
-        const localDate = `${booking.date.getFullYear()}-${String(booking.date.getMonth() + 1).padStart(2, '0')}-${String(booking.date.getDate()).padStart(2, '0')}`;
+        const time = formatTimeInSaoPaulo(booking.date);
+        const localDate = formatDateInSaoPaulo(booking.date);
 
         return {
             id: booking.id,

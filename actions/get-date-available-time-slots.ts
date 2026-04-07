@@ -1,5 +1,4 @@
 "use server"
-import { endOfDay, format, startOfDay } from "date-fns";
 import { z } from "zod";
 
 import { actionClient } from "@/lib/action-client";
@@ -36,6 +35,54 @@ const TIME_SLOTS = [
     "20:00",
     "20:30",
 ] as const;
+const SAO_PAULO_TIME_ZONE = "America/Sao_Paulo";
+
+function getDatePartsInSaoPaulo(date: Date) {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+        timeZone: SAO_PAULO_TIME_ZONE,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+    }).formatToParts(date);
+
+    const year = parts.find((part) => part.type === "year")?.value ?? "0000";
+    const month = parts.find((part) => part.type === "month")?.value ?? "01";
+    const day = parts.find((part) => part.type === "day")?.value ?? "01";
+
+    return { year, month, day, ymd: `${year}-${month}-${day}` };
+}
+
+function getTimeInSaoPaulo(date: Date): string {
+    return new Intl.DateTimeFormat("pt-BR", {
+        timeZone: SAO_PAULO_TIME_ZONE,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+    }).format(date);
+}
+
+function getDayOfWeekInSaoPaulo(date: Date): number {
+    const shortWeekDay = new Intl.DateTimeFormat("en-US", {
+        timeZone: SAO_PAULO_TIME_ZONE,
+        weekday: "short",
+    }).format(date);
+
+    const dayMap: Record<string, number> = {
+        Sun: 0,
+        Mon: 1,
+        Tue: 2,
+        Wed: 3,
+        Thu: 4,
+        Fri: 5,
+        Sat: 6,
+    };
+
+    return dayMap[shortWeekDay] ?? 0;
+}
+
+function createSaoPauloDateTime(ymd: string, time: string): Date {
+    return new Date(`${ymd}T${time}:00-03:00`);
+}
 
 function compareTime(time1: string, time2: string): number {
     const [h1, m1] = time1.split(':').map(Number);
@@ -45,32 +92,34 @@ function compareTime(time1: string, time2: string): number {
     return mins1 - mins2;
 }
 
-function isTimeInPast(timeSlot: string, selectedDate: Date): boolean {
+function isTimeInPast(timeSlot: string, selectedDateYmd: string): boolean {
     const now = new Date();
-    const [hours, minutes] = timeSlot.split(':').map(Number);
-    
-    const slotTime = new Date(selectedDate);
-    slotTime.setHours(hours, minutes, 0, 0);
-    
-    return slotTime <= now;
+    const nowYmd = getDatePartsInSaoPaulo(now).ymd;
+    const nowTime = getTimeInSaoPaulo(now);
+
+    const slotTime = createSaoPauloDateTime(selectedDateYmd, timeSlot);
+    const nowInSaoPaulo = createSaoPauloDateTime(nowYmd, nowTime);
+
+    return slotTime <= nowInSaoPaulo;
 }
 
 export const getDateAvailableTimeSlots = actionClient
     .inputSchema(inputSchema)
     .action(async ({ parsedInput: { barbershopId, date } }) => {
         const now = new Date();
-        
-        // Check if date is in the past
-        const selectedDateNormalized = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        const todayNormalized = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        
+
+        const selectedDateYmd = getDatePartsInSaoPaulo(date).ymd;
+        const todayYmd = getDatePartsInSaoPaulo(now).ymd;
+        const selectedDateNormalized = new Date(`${selectedDateYmd}T00:00:00-03:00`);
+        const todayNormalized = new Date(`${todayYmd}T00:00:00-03:00`);
+
         if (selectedDateNormalized < todayNormalized) {
             return [];
         }
-        
+
         // Get business hours for the day
         const businessHours = await getBusinessHours(barbershopId);
-        const dayOfWeek = date.getDay();
+        const dayOfWeek = getDayOfWeekInSaoPaulo(date);
         const dayHours = businessHours.find(h => h.dayOfWeek === dayOfWeek);
 
         // Check if shop is closed
@@ -82,19 +131,17 @@ export const getDateAvailableTimeSlots = actionClient
             where: {
                 barbershopId,
                 date: {
-                    gte: startOfDay(date),
-                    lte: endOfDay(date),
+                    gte: new Date(`${selectedDateYmd}T00:00:00-03:00`),
+                    lte: new Date(`${selectedDateYmd}T23:59:59.999-03:00`),
                 },
                 cancelledAt: null,
             },
         });
 
-        const occupiedTimeSlots = bookings.map(booking => format(booking.date, 'HH:mm'));
+        const occupiedTimeSlots = bookings.map(booking => getTimeInSaoPaulo(booking.date));
 
         // Check if the selected date is today
-        const selectedDateYMD = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
-        const todayYMD = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        const isToday = selectedDateYMD === todayYMD;
+        const isToday = selectedDateYmd === todayYmd;
 
         // Filter time slots based on business hours
         let availableTimeSlots = TIME_SLOTS.filter(timeSlot => {
@@ -120,7 +167,7 @@ export const getDateAvailableTimeSlots = actionClient
 
             // Only exclude past times if it's today
             if (isToday) {
-                if (isTimeInPast(timeSlot, date)) {
+                if (isTimeInPast(timeSlot, selectedDateYmd)) {
                     return false;
                 }
             }

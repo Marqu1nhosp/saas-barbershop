@@ -38,6 +38,14 @@ export function NewAppointmentDialog({
     services,
     barbershopId,
 }: NewAppointmentDialogProps) {
+    const isSelectedDateInPast = (dateString: string): boolean => {
+        const [year, month, day] = dateString.split('-').map(Number);
+        const selectedDate = new Date(year, month - 1, day, 0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        return selectedDate < today;
+    };
+
     const [isLoading, setIsLoading] = useState(false);
     const [clientSearchTerm, setClientSearchTerm] = useState('');
     const [isClientDropdownOpen, setIsClientDropdownOpen] = useState(false);
@@ -373,7 +381,7 @@ export function NewAppointmentDialog({
                                 </select>
                             ) : formData.date ? (
                                 <div className="py-2 px-3 text-sm text-slate-500 border border-slate-300 rounded-lg bg-slate-50">
-                                    {new Date(formData.date) < new Date() ? 
+                                    {isSelectedDateInPast(formData.date) ?
                                         'Data no passado - selecione uma data válida' :
                                         'Nenhum horário disponível para esta data'
                                     }
