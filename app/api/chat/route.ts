@@ -84,7 +84,6 @@ chat/r
                         ),
                 }),
                 execute: async ({ name }) => {
-                    console.log("searchBarbershops", name);
                     if (!name?.trim()) {
                         const barbershops = await prisma.barbershop.findMany({
                             include: {
@@ -119,7 +118,6 @@ chat/r
                         ),
                 }),
                 execute: async ({ barbershopId, date }) => {
-                    console.log("getAvailableTimeSlotsForBarbershop", barbershopId, date);
                     const availableTimeSlots = await getDateAvailableTimeSlots({
                         barbershopId,
                         date: new Date(date),
@@ -143,7 +141,7 @@ chat/r
                         ),
                 }),
                 execute: async ({ serviceId, date }) => {
-                    console.log("createBooking", serviceId, date);
+
                     try {
                         await createBooking({
                             serviceId,

@@ -42,15 +42,11 @@ export default function DashboardPage() {
 
     // Usar barbershopId da sessão do dashboard (JWT)
     useEffect(() => {
-        console.log('[Dashboard] useEffect triggered:', { isDashboardLoading, dashboardUser });
-        
         if (isDashboardLoading) {
-            console.log('[Dashboard] Dashboard session still loading...');
             return;
         }
 
         if (dashboardUser?.barbershopId) {
-            console.log('[Dashboard] ✅ Using barbershopId from dashboard session:', dashboardUser.barbershopId);
             setBarbershopId(dashboardUser.barbershopId);
             localStorage.setItem('barbershopId', dashboardUser.barbershopId);
         } else {
@@ -59,7 +55,7 @@ export default function DashboardPage() {
             if (isDashboardRoute && dashboardUser === null) {
                 console.log('[Dashboard] User logged out or session cleared (expected)');
             } else {
-                console.error('[Dashboard] ❌ No barbershopId found. Full user:', dashboardUser);
+                console.warn('[Dashboard] No barbershopId found in session, and user is not null. This may indicate an issue with the session or authentication flow.');
             }
             setBarbershopId(null);
         }
@@ -78,10 +74,6 @@ export default function DashboardPage() {
                         getWeeklyBookings(barbershopId),
                         getMostPopularServices(barbershopId),
                     ]);
-
-                console.log('METRICS:', metricsData);
-                console.log('WEEKLY:', weeklyBookingsData);
-                console.log('SERVICES:', popularServicesData);
 
                 setMetrics(metricsData);
                 setWeeklyData(weeklyBookingsData);

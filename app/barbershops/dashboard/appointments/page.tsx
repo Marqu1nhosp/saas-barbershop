@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 'use client';
 
 import { format, parseISO } from 'date-fns';
@@ -237,7 +238,6 @@ export default function AppointmentsPage() {
                         className="pl-10 h-11 rounded-lg border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                         value={selectedDate}
                         onChange={(e) => {
-                            console.log('[Appointments] Date changed from:', selectedDate, 'to:', e.target.value);
                             setSelectedDate(e.target.value);
                         }}
                     />

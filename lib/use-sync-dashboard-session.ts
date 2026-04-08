@@ -22,23 +22,15 @@ export function useSyncDashboardSession() {
     const { data: session } = authClient.useSession();
 
     useLayoutEffect(() => {
-        console.log('[useSyncDashboardSession] Hook triggered, checking session:', { 
-            hasSession: !!session?.user,
-            userEmail: session?.user?.email
-        });
 
         // Verificar se existe um token do dashboard (indica que o usuário está logado no dashboard)
         const dashboardToken = localStorage.getItem('dashboard_auth_token');
         const dashboardUserJson = localStorage.getItem('dashboard_auth_user');
 
-        console.log('[useSyncDashboardSession] Stored dashboard session:', { 
-            hasDashboardToken: !!dashboardToken,
-            hasDashboardUser: !!dashboardUserJson
-        });
 
         if (session?.user) {
             const sessionUser = session.user as SessionUser;
-            
+
             // ❌ NÃO sincronizar se dashboard está logado
             // Se há um dashboard token, significa que há um usuário de dashboard logado
             // Neste caso, NUNCA sincronizar com better-auth
@@ -63,7 +55,6 @@ export function useSyncDashboardSession() {
                 barbershopId: sessionUser.barbershopId || null,
             };
 
-            console.log('[useSyncDashboardSession] Syncing SaaS user to dashboard session:', saasUser);
 
             // Usar um token dummy já que o better-auth gerencia a sessão
             const token = sessionData.token || 'better-auth-token';

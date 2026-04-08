@@ -22,7 +22,6 @@ export async function POST(req: Request) {
             return NextResponse.json({ error: 'Usuário não encontrado' }, { status: 404 });
         }
 
-        console.log('[api/auth/login] User found:', { id: user.id, email: user.email, role: user.role, barbershopId: user.barbershopId });
 
         // Verificar se o usuário tem senha (não é usuário OAuth)
         if (!user.password) {
@@ -53,7 +52,6 @@ export async function POST(req: Request) {
             }
         };
 
-        console.log('[api/auth/login] Returning response:', { user: responseData.user });
 
         return NextResponse.json(responseData);
     } catch (error) {

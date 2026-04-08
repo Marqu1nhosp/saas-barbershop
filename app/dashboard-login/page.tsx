@@ -2,14 +2,16 @@
 
 import { zodResolver } from '@hookform/resolvers/zod';
 import { AlertCircle, Loader2, Lock, Mail } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { z } from 'zod';
 
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
-import { saveDashboardSession, clearDashboardSession } from '@/lib/use-dashboard-session';
+import { clearDashboardSession, saveDashboardSession } from '@/lib/use-dashboard-session';
 
 const loginSchema = z.object({
     email: z.string().email('Email inválido'),
@@ -20,6 +22,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 
 export default function LoginPage() {
     const router = useRouter();
+    const [visiblePassword, setVisiblePassword] = useState(false);
 
     const {
         register,
@@ -36,10 +39,7 @@ export default function LoginPage() {
 
     const onSubmit = async (data: LoginFormData) => {
         try {
-            console.log('[Dashboard Login] Starting login process...');
-            
             // Limpar qualquer sessão anterior antes de fazer login
-            console.log('[Dashboard Login] Clearing previous session...');
             clearDashboardSession();
 
             // ❌ Fazer logout do better-auth (SaaS session) para evitar conflito
@@ -47,11 +47,11 @@ export default function LoginPage() {
                 await fetch('/api/auth/signout', {
                     method: 'POST',
                 });
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
             } catch (err) {
                 console.log('[Dashboard Login] Signout attempt completed (may not exist)');
             }
 
-            console.log('[Dashboard Login] Sending login request...');
             const res = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -65,31 +65,20 @@ export default function LoginPage() {
 
             const { token, user } = await res.json();
 
-            console.log('[Dashboard Login] ✅ Response received:', { 
-                token: token?.slice(0, 20) + '...', 
-                userId: user.id,
-                userRole: user.role,
-                barbershopId: user.barbershopId
-            });
-
             document.cookie = `token=${token}; path=/; max-age=${24 * 60 * 60}`;
 
             // Salvar com a chave específica do dashboard
-            console.log('[Dashboard Login] Saving dashboard session...');
             saveDashboardSession(user, token);
 
             if (user.barbershopId) {
-                console.log('[Dashboard Login] Setting barbershopId to localStorage:', user.barbershopId);
                 localStorage.setItem('barbershopId', user.barbershopId);
             } else {
-                console.warn('[Dashboard Login] ⚠️ No barbershopId in response:', user);
+                console.warn('[Dashboard Login] No barbershopId in response:', user);
             }
 
             // Maior delay para garantir que listeners sejam notificados
-            console.log('[Dashboard Login] Waiting 300ms for session sync...');
             await new Promise((r) => setTimeout(r, 300));
 
-            console.log('[Dashboard Login] ✅ Redirecting to dashboard...');
             router.push('/barbershops/dashboard');
         } catch (err) {
             console.error('[Dashboard Login] ❌ Login failed:', err);
@@ -136,12 +125,19 @@ export default function LoginPage() {
                                 <div className="relative">
                                     <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" />
                                     <Input
-                                        type="password"
+                                        type={visiblePassword ? 'text' : 'password'}
                                         placeholder="••••••••"
                                         disabled={isSubmitting}
                                         className="pl-10 h-11 rounded-lg border-slate-300 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20"
                                         {...register('password')}
                                     />
+                                    <button
+                                        type="button"
+                                        className="absolute right-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400"
+                                        onClick={() => setVisiblePassword(!visiblePassword)}
+                                    >
+                                        {visiblePassword ? <Eye /> : <EyeOff />}
+                                    </button>
                                 </div>
                                 {errors.password && (
                                     <p className="text-sm text-red-500 mt-2">
@@ -174,13 +170,13 @@ export default function LoginPage() {
                                 )}
                             </Button>
                         </form>
-
+                        {/* 
                         <div className="mt-6 pt-6 border-t border-slate-200 text-center text-sm text-slate-600">
                             Não tem uma conta?{' '}
                             <a href="/register" className="text-blue-600 font-semibold hover:text-blue-700 transition-colors">
                                 Registre-se aqui
                             </a>
-                        </div>
+                        </div> */}
                     </CardContent>
                 </Card>
             </div>

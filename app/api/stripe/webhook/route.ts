@@ -14,26 +14,23 @@ const metadataSchema = z.object({
 
 export const POST = async (req: Request) => {
     try {
-        console.log("🔗 WEBHOOK STRIPE - Iniciando processamento");
-        
         if (!process.env.STRIPE_SECRET_KEY) {
             console.error("❌ STRIPE_SECRET_KEY não configurada");
             return NextResponse.json({ error: "STRIPE_SECRET_KEY missing" }, { status: 500 });
         }
-        
+
         if (!process.env.STRIPE_WEBHOOK_SECRET_KEY) {
             console.error("❌ STRIPE_WEBHOOK_SECRET_KEY não configurada");
             return NextResponse.json({ error: "STRIPE_WEBHOOK_SECRET_KEY missing" }, { status: 500 });
         }
-        
+
         const signature = req.headers.get("stripe-signature");
         if (!signature) {
             console.error("❌ stripe-signature header não encontrado");
             return NextResponse.json({ error: "No signature" }, { status: 400 });
         }
-        
+
         const body = await req.text();
-        console.log("📝 Body recebido:", body.substring(0, 200));
 
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
             apiVersion: "2025-08-27.basil",
@@ -42,20 +39,15 @@ export const POST = async (req: Request) => {
         let event;
         try {
             event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET_KEY);
-            console.log("✅ Assinatura validada com sucesso");
         } catch (err) {
             console.error("❌ Erro ao validar assinatura:", err instanceof Error ? err.message : err);
             return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
         }
 
-        console.log(`📨 Evento recebido: ${event.type}`);
 
         if (event.type === "checkout.session.completed") {
             const session = event.data.object as Stripe.Checkout.Session;
-            
-            console.log("🔍 Dados da sessão:");
-            console.log("   Session ID:", session.id);
-            console.log("   Metadata:", JSON.stringify(session.metadata, null, 2));
+
 
             if (!session.metadata) {
                 console.warn("⚠️ Checkout sem metadata, pulando...");
@@ -64,7 +56,7 @@ export const POST = async (req: Request) => {
 
             try {
                 const metadata = metadataSchema.parse(session.metadata);
-                console.log("✅ Metadata validada:", metadata);
+
 
                 const expandedSession = await stripe.checkout.sessions.retrieve(session.id, {
                     expand: ["payment_intent"],
@@ -74,8 +66,9 @@ export const POST = async (req: Request) => {
                     ? paymentIntent.latest_charge
                     : paymentIntent.latest_charge?.id;
 
-                console.log("💳 Charge ID:", chargeId);
 
+
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
                 const booking = await prisma.booking.create({
                     data: {
                         serviceId: metadata.serviceId,
@@ -86,14 +79,12 @@ export const POST = async (req: Request) => {
                         stripeChargeId: chargeId,
                     }
                 });
-
-                console.log("✅ Booking criado com sucesso:", booking.id);
             } catch (error) {
                 console.error("❌ Erro ao processar checkout:", error instanceof Error ? error.message : error);
                 throw error;
             }
         } else {
-            console.log(`⊘ Evento ignorado: ${event.type}`);
+            console.log(`Evento ignorado: ${event.type}`);
         }
 
         return NextResponse.json({ received: true });

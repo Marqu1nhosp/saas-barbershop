@@ -44,12 +44,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     const [barbershopName, setBarbershopName] = useState<string | null>(null);
     const { user } = useDashboardSession();
 
-    console.log('[DashboardLayout] User loaded:', { 
-        id: user?.id, 
-        email: user?.email, 
-        role: user?.role, 
-        barbershopId: user?.barbershopId 
-    });
 
     const filteredNavItems = navItems.filter((item) => {
         // Se for funcionário, esconde Profissionais, Financeiro e Configurações
@@ -62,11 +56,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     // Sincronizar barbershopId da sessão com localStorage
     useEffect(() => {
         if (user?.barbershopId) {
-            console.log('[DashboardLayout] Setting barbershopId to localStorage:', user.barbershopId);
             localStorage.setItem('barbershopId', user.barbershopId);
         } else {
             console.warn('[DashboardLayout] ⚠️ No barbershopId in user:', user);
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [user?.barbershopId]);
 
     useEffect(() => {

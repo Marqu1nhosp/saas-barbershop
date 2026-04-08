@@ -83,7 +83,7 @@ export function NewAppointmentDialog({
                 // Corrigir timezone: split a data e criar no fuso horário local
                 const [year, month, day] = formData.date.split('-').map(Number);
                 const date = new Date(year, month - 1, day, 0, 0, 0, 0);
-                
+
                 const result = await getDateAvailableTimeSlots({
                     barbershopId,
                     date,
@@ -110,17 +110,17 @@ export function NewAppointmentDialog({
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
             const target = event.target as Node;
-            
+
             // Se clicou no input, não fecha
             if (clientInputRef.current?.contains(target)) {
                 return;
             }
-            
+
             // Se clicou no dropdown, não fecha
             if (dropdownRef.current?.contains(target)) {
                 return;
             }
-            
+
             // Caso contrário, fecha
             setIsClientDropdownOpen(false);
         };
@@ -176,14 +176,8 @@ export function NewAppointmentDialog({
             const [year, month, day] = formData.date.split('-').map(Number);
             const [hours, minutes] = formData.time.split(':').map(Number);
             const dateTime = new Date(year, month - 1, day, hours, minutes, 0, 0);
-            
-            console.log('[NewAppointmentDialog] Tentando criar agendamento:', {
-                clientId: formData.clientId,
-                serviceId: formData.serviceId,
-                dateTime: dateTime.toISOString(),
-                barbershopId,
-            });
-            
+
+
             const result = await adminCreateBooking({
                 clientId: formData.clientId,
                 serviceId: formData.serviceId,
@@ -191,18 +185,15 @@ export function NewAppointmentDialog({
                 barbershopId,
             });
 
-            console.log('[NewAppointmentDialog] Resposta da ação:', result);
-            
+
             if (result.data) {
                 toast.success('Agendamento criado com sucesso');
                 setFormData({ clientId: '', serviceId: '', date: '', time: '' });
                 onClose();
                 onSuccess();
             } else {
-                console.log('[NewAppointmentDialog] ❌ Validação falhou');
-                console.log('[NewAppointmentDialog] Todos os erros:', JSON.stringify(result.validationErrors, null, 2));
                 const errorMessage = result.validationErrors?.['_errors']?.[0] || JSON.stringify(result.validationErrors) || 'Erro ao criar agendamento';
-                console.log('[NewAppointmentDialog] ❌ Mensagem de erro:', errorMessage);
+
                 toast.error(errorMessage);
             }
         } catch (error) {
@@ -244,7 +235,7 @@ export function NewAppointmentDialog({
                         />
 
                         {isClientDropdownOpen && (
-                            <div 
+                            <div
                                 ref={dropdownRef}
                                 className="absolute top-full left-0 right-0 mt-1 bg-white border border-slate-300 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto"
                             >

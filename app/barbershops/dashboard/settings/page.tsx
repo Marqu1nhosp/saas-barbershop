@@ -89,8 +89,6 @@ export default function SettingsPage() {
     }, [reset]);
 
     const onSubmit = async (data: SettingsFormData) => {
-        console.log('DADOS DA BARBEARIA:', data);
-
         const barbershopId = localStorage.getItem('barbershopId');
         if (!barbershopId) return;
 

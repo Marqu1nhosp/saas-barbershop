@@ -74,14 +74,9 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
 
     const { execute: executeCreateEmployee, isPending } = useAction(createEmployee, {
         onSuccess: (result) => {
-            console.log('onSuccess called with result:', result);
             setActionResult(result);
         },
         onError: (result) => {
-            console.log('onError called with result:', JSON.stringify(result, null, 2));
-            console.log('Error details - Full error object:', result.error);
-            console.log('validationErrors:', result.error?.validationErrors);
-            console.log('serverError:', result.error?.serverError);
 
             let message = '';
 
@@ -91,7 +86,6 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
                     message = result.error.validationErrors._errors[0];
                 } else {
                     // Se tem validationErrors mas não tem _errors, log dos detalhes
-                    console.log('validationErrors structure:', JSON.stringify(result.error.validationErrors, null, 2));
                     message = 'Erro de validação: ' + JSON.stringify(result.error.validationErrors);
                 }
             } else if (result.error?.serverError) {
@@ -108,9 +102,6 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
         if (!actionResult || hasProcessedResult.current) return;
 
         hasProcessedResult.current = true;
-
-        // Debug: log the result
-        console.log('Action result:', actionResult);
 
         // Check for validation errors
         if (actionResult.validationErrors?._errors?.[0]) {
@@ -137,13 +128,11 @@ export function AddEmployeeDialog({ isOpen, onClose, onSuccess }: AddEmployeeDia
     }, [isOpen]);
 
     const onSubmit = async (data: AddEmployeeFormData) => {
-        console.log('onSubmit called with data:', data);
         if (!barbershopId) {
             toast.error('Barbearia não identificada');
             return;
         }
 
-        console.log('Executing createEmployee action...');
         await executeCreateEmployee({
             name: data.name,
             email: data.email,
