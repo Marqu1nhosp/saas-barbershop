@@ -150,23 +150,36 @@ export default function SettingsPage() {
             </div>
 
             <Tabs defaultValue="general" className="w-full">
-                <TabsList className="grid w-full grid-cols-2 sm:grid-cols-3 bg-slate-100 p-1 rounded-lg">
-                    <TabsTrigger value="general" className="rounded font-medium data-[state=active]:bg-white">
-                        <span className="hidden sm:inline">Geral</span>
-                        <span className="sm:hidden text-xs">Geral</span>
+                <TabsList className="grid h-auto w-full grid-cols-3 gap-1 bg-slate-100 p-1 rounded-lg sm:gap-0">
+                    <TabsTrigger
+                        value="general"
+                        className="rounded font-medium data-[state=active]:bg-white min-w-0 px-2 py-2 sm:px-3"
+                    >
+                        <span className="text-xs sm:text-sm truncate">Geral</span>
                     </TabsTrigger>
-                    <TabsTrigger value="schedules" className="rounded font-medium data-[state=active]:bg-white">
-                        <Clock className="w-4 h-4 sm:mr-2 sm:inline-block" />
-                        <span className="hidden sm:inline text-sm">Horários</span>
+                    <TabsTrigger
+                        value="schedules"
+                        className="rounded font-medium data-[state=active]:bg-white flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 min-w-0 px-2 py-2 sm:px-3"
+                    >
+                        <Clock className="w-4 h-4 shrink-0" />
+                        <span className="text-[10px] leading-tight sm:text-sm sm:leading-normal text-center truncate max-w-full">
+                            Horários
+                        </span>
                     </TabsTrigger>
-                    <TabsTrigger value="cancellation" className="rounded font-medium data-[state=active]:bg-white hidden sm:flex">
-                        <AlertCircle className="w-4 h-4 sm:mr-2" />
-                        <span className="hidden text-sm">Cancelamento</span>
+                    <TabsTrigger
+                        value="cancellation"
+                        className="rounded font-medium data-[state=active]:bg-white flex flex-col sm:flex-row items-center justify-center gap-0.5 sm:gap-2 min-w-0 px-2 py-2 sm:px-3"
+                    >
+                        <AlertCircle className="w-4 h-4 shrink-0" />
+                        <span className="text-[10px] leading-tight sm:text-sm sm:leading-normal text-center truncate max-w-full">
+                            <span className="sm:hidden">Cancel.</span>
+                            <span className="hidden sm:inline">Cancelamento</span>
+                        </span>
                     </TabsTrigger>
                 </TabsList>
 
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-                    <TabsContent value="general" className="mt-6">
+                    <TabsContent value="general" className="mt-6 data-[state=inactive]:hidden">
                         <Card className="border-slate-200 shadow-sm">
                             <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
                                 <CardTitle className="text-xl">Informações da Barbearia</CardTitle>
@@ -238,7 +251,7 @@ export default function SettingsPage() {
                     </TabsContent>
                 </form>
 
-                <TabsContent value="schedules" className="mt-6">
+                <TabsContent value="schedules" className="mt-6 data-[state=inactive]:hidden">
                     {(() => {
                         const barbershopId = localStorage.getItem('barbershopId');
                         return barbershopId ? (
@@ -258,7 +271,7 @@ export default function SettingsPage() {
                     })()}
                 </TabsContent>
 
-                <TabsContent value="cancellation" className="mt-6">
+                <TabsContent value="cancellation" className="mt-6 data-[state=inactive]:hidden">
                     <Card className="border-slate-200 shadow-sm">
                         <CardHeader className="bg-gradient-to-r from-slate-50 to-slate-100 border-b border-slate-200">
                             <CardTitle>Política de Cancelamento</CardTitle>
