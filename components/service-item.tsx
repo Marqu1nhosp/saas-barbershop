@@ -59,7 +59,7 @@ export function ServiceItem({ service, barbershop }: ServiceItemProps) {
 
 
                     <div className="flex-1">
-                        <CardTitle className="text-sm font-medium">
+                        <CardTitle className="text-sm font-medium dark:text-white">
                             {service.name}
                         </CardTitle>
 
@@ -70,7 +70,7 @@ export function ServiceItem({ service, barbershop }: ServiceItemProps) {
                         )}
 
                         {price && (
-                            <div className="mt-2 text-sm font-semibold text-black">
+                            <div className="mt-2 text-sm font-semibold text-black dark:text-white">
                                 {price}
                             </div>
                         )}

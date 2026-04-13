@@ -45,7 +45,7 @@ const BarbershopPage = async ({ params }: PageProps<"/barbershops/[id]">) => {
                         </div>
                         <h1 className="text-xl font-bold">{barbershop.name}</h1>
                     </div>
-                    <p className="text-muted-foreground text-sm">{barbershop.address}</p>
+                    <p className="text-muted-foreground text-sm dark:text-white">{barbershop.address}</p>
                 </div>
 
                 {/* Divider */}
