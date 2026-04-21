@@ -76,7 +76,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }, []);
 
     return (
-        <div className="flex min-h-screen bg-slate-50">
+            <div className="flex min-h-screen bg-slate-50">
             <DashboardSessionSync />
             {/* Sidebar Desktop */}
             <aside className="fixed left-0 top-0 z-40 hidden md:flex w-64 h-screen bg-gradient-to-b from-slate-900 to-slate-950 text-white shadow-xl">
@@ -192,6 +192,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                     {children}
                 </div>
             </main>
-        </div>
+            </div>
     );
 }

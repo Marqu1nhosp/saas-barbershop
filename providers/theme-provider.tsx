@@ -4,15 +4,24 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 
 type ThemeProviderProps = {
   children: React.ReactNode;
+  storageKey?: string;
+  defaultTheme?: "light" | "dark" | "system";
+  forcedTheme?: "light" | "dark";
 };
 
-export function ThemeProvider({ children }: ThemeProviderProps) {
+export function ThemeProvider({
+  children,
+  storageKey = "barbershop-theme",
+  defaultTheme = "system",
+  forcedTheme,
+}: ThemeProviderProps) {
   return (
     <NextThemesProvider
       attribute="class"
-      defaultTheme="system"
+      defaultTheme={defaultTheme}
       enableSystem
-      storageKey="barbershop-theme"
+      storageKey={storageKey}
+      forcedTheme={forcedTheme}
     >
       {children}
     </NextThemesProvider>
