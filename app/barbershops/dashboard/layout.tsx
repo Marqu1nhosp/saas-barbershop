@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart3, Bell, Calendar, DollarSign, LogOut, Menu, Scissors, Settings, Users, X } from 'lucide-react';
+import { BarChart3, Bell, Building2, Calendar, DollarSign, LogOut, Menu, Scissors, Settings, Users, X } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import React, { useEffect, useRef, useState } from 'react';
@@ -13,6 +13,12 @@ import { clearDashboardSession, useDashboardSession } from '@/lib/use-dashboard-
 import { cn } from '@/lib/utils';
 
 const navItems = [
+    {
+        href: '/barbershops/dashboard/barbershops',
+        label: 'Barbearias',
+        icon: Building2,
+        globalAdminOnly: true,
+    },
     {
         href: '/barbershops/dashboard',
         label: 'Visão Geral',
@@ -57,6 +63,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
 
     const filteredNavItems = navItems.filter((item) => {
+        if (user?.role === 'SUPERADMIN') {
+            return item.globalAdminOnly === true;
+        }
+
+        if (item.globalAdminOnly && user?.role !== 'SUPERADMIN') {
+            return false;
+        }
         // Se for funcionário, esconde Profissionais, Financeiro, Serviços e Configurações
         if (user?.role === 'EMPLOYEE') {
             return !['professionals', 'financial', 'services', 'settings'].some(keyword => item.href.includes(keyword));

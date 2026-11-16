@@ -4,7 +4,6 @@ import type { Metadata } from "next";
 import { Plus_Jakarta_Sans } from "next/font/google";
 
 import { AppShell } from "@/components/app-shell";
-import { Footer } from "@/components/footer";
 import SonnerToaster from "@/components/sonner-toaster";
 import { AppThemeProvider } from "@/providers/app-theme-provider";
 import { TanstackQueryProvider } from "@/providers/tanstack-query";
@@ -33,7 +32,6 @@ export default function RootLayout({
         <AppThemeProvider>
           <TanstackQueryProvider>
             <AppShell>{children}</AppShell>
-            <Footer />
             <SonnerToaster />
           </TanstackQueryProvider>
         </AppThemeProvider>

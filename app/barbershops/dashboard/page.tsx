@@ -1,11 +1,13 @@
 'use client';
 
 import { Calendar, DollarSign, TrendingUp, Users } from 'lucide-react';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 import { BarChartComponent } from '@/components/dashboard/bar-chart';
 import { MetricCard } from '@/components/dashboard/metric-card';
 import { PieChartComponent } from '@/components/dashboard/pie-chart';
+import { Button } from '@/components/ui/button';
 import {
     getDashboardMetrics,
     getMostPopularServices,
@@ -58,6 +60,7 @@ export default function DashboardPage() {
                 console.warn('[Dashboard] No barbershopId found in session, and user is not null. This may indicate an issue with the session or authentication flow.');
             }
             setBarbershopId(null);
+            setLoading(false);
         }
     }, [dashboardUser?.barbershopId, isDashboardLoading, dashboardUser]);
 
@@ -94,6 +97,20 @@ export default function DashboardPage() {
                 <div className="text-center">
                     <div className="inline-block w-12 h-12 bg-gradient-to-br from-blue-500 to-slate-600 rounded-full animate-spin mb-4"></div>
                     <p className="text-slate-600 font-medium">Carregando dashboard...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (dashboardUser?.role === 'SUPERADMIN' && !barbershopId) {
+        return (
+            <div className="flex min-h-[420px] items-center justify-center">
+                <div className="max-w-lg text-center">
+                    <h1 className="text-3xl font-bold text-slate-900">Comece cadastrando uma barbearia</h1>
+                    <p className="mt-3 text-slate-500">Crie a primeira unidade, defina o proprietário e selecione os serviços iniciais.</p>
+                    <Button asChild className="mt-6">
+                        <Link href="/barbershops/dashboard/barbershops">Cadastrar barbearia</Link>
+                    </Button>
                 </div>
             </div>
         );

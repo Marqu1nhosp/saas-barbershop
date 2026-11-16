@@ -23,7 +23,7 @@ async function seedDatabase() {
                 name: "Admin Barbearia",
                 email: "admin@barbearia.com",
                 password: adminPassword,
-                role: "ADMIN",
+                role: "SUPERADMIN",
             },
         });
 

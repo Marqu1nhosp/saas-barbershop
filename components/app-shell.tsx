@@ -3,6 +3,7 @@
 import { usePathname } from "next/navigation";
 import { type ReactNode } from "react";
 
+import { Footer } from "@/components/footer";
 import { MobileNav } from "@/components/mobile-nav";
 
 export function AppShell({ children }: { children: ReactNode }) {
@@ -14,6 +15,7 @@ export function AppShell({ children }: { children: ReactNode }) {
     <>
       <main className={hideMobileNav ? "flex-1" : "flex-1 pb-28"}>{children}</main>
       {!hideMobileNav && <MobileNav />}
+      {pathname !== "/dashboard-login" && <Footer />}
     </>
   );
 }

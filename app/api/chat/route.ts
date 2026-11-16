@@ -86,6 +86,7 @@ chat/r
                 execute: async ({ name }) => {
                     if (!name?.trim()) {
                         const barbershops = await prisma.barbershop.findMany({
+                            where: { isActive: true },
                             include: {
                                 services: true,
                             },
@@ -94,10 +95,10 @@ chat/r
                     }
                     const barbershops = await prisma.barbershop.findMany({
                         where: {
-                            name: {
-                                contains: name,
-                                mode: "insensitive",
-                            },
+                            AND: [
+                                { isActive: true },
+                                { name: { contains: name, mode: "insensitive" } },
+                            ],
                         },
                         include: {
                             services: true,

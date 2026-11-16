@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 export async function getBarberShops() {
   try {
     const barbershop = await prisma.barbershop.findMany({
+      where: { isActive: true },
       select: {
         id: true,
         name: true,
@@ -21,7 +22,7 @@ export async function getBarberShops() {
 export async function getBarbershopById(id: string) {
   try {
     const barbershop = await prisma.barbershop.findUnique({
-      where: { id },
+      where: { id, isActive: true },
       include: { services: true },
     });
     return barbershop;
@@ -33,6 +34,7 @@ export async function getBarbershopById(id: string) {
 export async function getPopularBarbershops() {
   try {
     const barbershop = await prisma.barbershop.findMany({
+      where: { isActive: true },
       select: {
         id: true,
         name: true,
@@ -53,6 +55,7 @@ export async function getPopularBarbershops() {
 export async function searchBarbershops(search?: string) {
   if (!search) {
     return prisma.barbershop.findMany({
+      where: { isActive: true },
       select: {
         id: true,
         name: true,
@@ -64,29 +67,34 @@ export async function searchBarbershops(search?: string) {
 
   return prisma.barbershop.findMany({
     where: {
-      OR: [
+      AND: [
+        { isActive: true },
         {
-          name: {
-            contains: search,
-            mode: "insensitive",
-          },
-        },
-        {
-          address: {
-            contains: search,
-            mode: "insensitive",
-          },
-        },
-
-        {
-          services: {
-            some: {
+          OR: [
+            {
               name: {
                 contains: search,
                 mode: "insensitive",
               },
             },
-          },
+            {
+              address: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+
+            {
+              services: {
+                some: {
+                  name: {
+                    contains: search,
+                    mode: "insensitive",
+                  },
+                },
+              },
+            },
+          ]
         },
       ],
     },
